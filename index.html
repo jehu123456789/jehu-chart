@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Jehuchart — Connect & Share</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#101827">
+<link rel="icon" href="/icon.svg">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#071a25;--panel:#102b3b;--panel2:#17394a;--green:#00d9a0;--text:#f3f9fc;--muted:#a5bdca;--line:#254657}
@@ -430,5 +434,82 @@ async function init(){
 }
 init();
 </script>
+
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js");
+  });
+}
+</script>
+
+
+
+<style>
+.install-jehu-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 99999;
+  padding: 15px 23px;
+  border: none;
+  border-radius: 40px;
+  background: linear-gradient(135deg, #16a34a, #047857);
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 5px 25px rgba(0,0,0,.3);
+  animation: installPulse 2s infinite;
+}
+
+.install-jehu-btn:hover {
+  transform: scale(1.06);
+}
+
+@keyframes installPulse {
+  50% { box-shadow: 0 5px 30px rgba(22,163,74,.6); }
+}
+</style>
+
+<button class="install-jehu-btn" id="installJehu">
+  📲 INSTALL JEHUAPP
+</button>
+
+<script>
+let deferredPrompt;
+const installButton = document.getElementById("installJehu");
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredPrompt = event;
+  installButton.style.display = "block";
+});
+
+installButton.addEventListener("click", async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+
+    const result = await deferredPrompt.userChoice;
+
+    if (result.outcome === "accepted") {
+      installButton.textContent = "APP INSTALLED ✓";
+      installButton.disabled = true;
+    }
+
+    deferredPrompt = null;
+  } else {
+    alert("If JehuApp is installable, open Chrome menu and choose Install JehuApp or Add to Home Screen.");
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  installButton.textContent = "APP INSTALLED ✓";
+  installButton.disabled = true;
+});
+</script>
+
+
 </body>
 </html>
