@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Video Library</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #101827;
+    color: white;
+    padding: 25px;
+}
+
+.video-box {
+    max-width: 850px;
+    margin: 30px auto;
+    background: #1d293b;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 10px 35px #0008;
+}
+
+h1 {
+    text-align: center;
+    color: #38bdf8;
+}
+
+.description {
+    text-align: center;
+    color: #bbb;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+button {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 5px;
+}
+
+.save {
+    background: #0ea5e9;
+    color: white;
+}
+
+.open {
+    background: #16a34a;
+    color: white;
+}
+
+.delete {
+    background: #dc2626;
+    color: white;
+}
+
+.download {
+    background: #f59e0b;
+    color: black;
+}
+
+.links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 25px 0;
+}
+
+.links a {
+    background: #334155;
+    padding: 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    text-align: center;
+    transition: .3s;
+}
+
+.links a:hover {
+    background: #0284c7;
+    transform: translateY(-4px);
+}
+
+.video-item {
+    background: #334155;
+    padding: 15px;
+    margin: 12px 0;
+    border-radius: 10px;
+    overflow-wrap: anywhere;
+}
+
+.video-item a {
+    color: #38bdf8;
+}
+
+h2 {
+    color: #38bdf8;
+    margin-top: 30px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="video-box">
+
+<h1>🎬 MY VIDEO LIBRARY</h1>
+
+<p class="description">
+Your personal place to collect and save video links.
+</p>
+
+<h2>🌍 Video Websites</h2>
+
+<div class="links">
+
+<a href="https://www.youtube.com/" target="_blank">▶ YouTube</a>
+
+<a href="https://www.facebook.com/watch/" target="_blank">📺 Facebook</a>
+
+<a href="https://www.tiktok.com/" target="_blank">🎵 TikTok</a>
+
+<a href="https://vimeo.com/" target="_blank">🎥 Vimeo</a>
+
+<a href="https://archive.org/details/movies" target="_blank">🎞 Internet Archive</a>
+
+<a href="https://www.dailymotion.com/" target="_blank">📽 Dailymotion</a>
+
+</div>
+
+<h2>➕ Add a Video</h2>
+
+<input type="text" id="videoName"
+placeholder="Enter video name">
+
+<input type="url" id="videoLink"
+placeholder="Paste video link here">
+
+<button class="save" onclick="saveVideo()">
+💾 SAVE VIDEO
+</button>
+
+<h2>📁 My Saved Videos</h2>
+
+<div id="videoList"></div>
+
+</div>
+
+<script>
+
+let videos = JSON.parse(
+    localStorage.getItem("myVideos") || "[]"
+);
+
+function displayVideos() {
+
+    let list = document.getElementById("videoList");
+
+    list.innerHTML = "";
+
+    videos.forEach((video, index) => {
+
+        let item = document.createElement("div");
+        item.className = "video-item";
+
+        let title = document.createElement("h3");
+        title.textContent = "🎬 " + video.name;
+
+        let link = document.createElement("a");
+        link.href = video.url;
+        link.textContent = video.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+
+        let open = document.createElement("button");
+        open.className = "open";
+        open.textContent = "▶ WATCH";
+        open.onclick = () => window.open(
+            video.url, "_blank", "noopener,noreferrer"
+        );
+
+        let remove = document.createElement("button");
+        remove.className = "delete";
+        remove.textContent = "🗑 DELETE";
+        remove.onclick = () => {
+            videos.splice(index, 1);
+            saveData();
+        };
+
+        item.appendChild(title);
+        item.appendChild(link);
+        item.appendChild(document.createElement("br"));
+        item.appendChild(open);
+        item.appendChild(remove);
+
+        list.appendChild(item);
+
+    });
+
+}
+
+function saveVideo() {
+
+    let name = document.getElementById("videoName").value.trim();
+    let url = document.getElementById("videoLink").value.trim();
+
+    if (!name || !url) {
+        alert("Please enter the video name and link!");
+        return;
+    }
+
+    try {
+        let parsed = new URL(url);
+
+        if (!["http:", "https:"].includes(parsed.protocol)) {
+            throw new Error("Invalid link");
+        }
+
+        videos.push({
+            name: name,
+            url: parsed.href
+        });
+
+        saveData();
+
+        document.getElementById("videoName").value = "";
+        document.getElementById("videoLink").value = "";
+
+        alert("Video link saved successfully!");
+
+    } catch (error) {
+        alert("Please enter a valid video link.");
+    }
+
+}
+
+function saveData() {
+
+    localStorage.setItem(
+        "myVideos",
+        JSON.stringify(videos)
+    );
+
+    displayVideos();
+
+}
+
+displayVideos();
+
+</script>
+
+</body>
+</html>
