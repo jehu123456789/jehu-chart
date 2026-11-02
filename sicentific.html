@@ -1,0 +1,672 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050914">
+<title>Nova Scientific Calculator</title>
+
+<style>
+* { box-sizing: border-box; }
+
+:root {
+  --bg: #050914;
+  --panel: #0c1628;
+  --key: #12223a;
+  --accent: #00aaff;
+  --glow: rgba(0,170,255,.55);
+  --text: #f4f8ff;
+  --muted: #9db0cc;
+  --danger: #ff416c;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  transition: background .4s, color .4s;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--glow), transparent 35%);
+  opacity: .22;
+  animation: backgroundMove 12s ease-in-out infinite alternate;
+}
+
+@keyframes backgroundMove {
+  from { transform: translate(-10%, -5%) rotate(0deg); }
+  to { transform: translate(10%, 8%) rotate(25deg); }
+}
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+  max-width: 1000px;
+  margin: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  box-shadow: 0 0 25px var(--glow);
+  animation: pulse 2s infinite alternate;
+}
+
+@keyframes pulse {
+  from { box-shadow: 0 0 8px var(--glow); }
+  to { box-shadow: 0 0 28px var(--glow); }
+}
+
+h1 { margin: 0; font-size: clamp(20px, 4vw, 29px); }
+.subtitle { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+.top-actions { display: flex; gap: 8px; }
+
+.small-btn, .mode-btn {
+  background: var(--key);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 13px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.small-btn:hover, .mode-btn:hover {
+  box-shadow: 0 0 14px var(--glow);
+  transform: translateY(-2px);
+}
+
+.themes {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 6px 2px 12px;
+  scrollbar-width: thin;
+}
+
+.theme {
+  flex: 0 0 auto;
+  width: 75px;
+  padding: 9px 4px;
+  border: 1px solid #ffffff22;
+  background: var(--panel);
+  border-radius: 12px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: center;
+  font-size: 10px;
+}
+
+.theme span {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin: 0 auto 6px;
+  background: var(--swatch);
+  box-shadow: 0 0 12px var(--swatch);
+}
+
+.theme.active { border: 2px solid var(--accent); }
+
+.display {
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 22px;
+  padding: 16px;
+  min-height: 150px;
+  box-shadow: 0 0 25px var(--glow);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.display-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#expression {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: clamp(20px, 5vw, 30px);
+  text-align: right;
+  margin-top: 18px;
+}
+
+#result {
+  text-align: right;
+  color: var(--accent);
+  font-size: clamp(27px, 7vw, 44px);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 18px var(--glow);
+  min-height: 52px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modes { display: flex; gap: 6px; }
+
+.mode-btn { padding: 8px 13px; font-size: 12px; }
+.mode-btn.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 15px var(--glow);
+}
+
+.memory { color: var(--muted); font-size: 12px; }
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.key {
+  min-height: clamp(48px, 7vh, 68px);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 15px;
+  background: linear-gradient(145deg, var(--key), var(--panel));
+  color: var(--text);
+  font-size: clamp(15px, 2.6vw, 21px);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 #ffffff10, 0 4px 12px #0004;
+  transition: transform .12s, box-shadow .2s, background .2s;
+  animation: appear .35s both;
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.key:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 17px var(--glow);
+  transform: translateY(-2px);
+}
+
+.key:active { transform: scale(.93); }
+
+.key.function { color: var(--accent); }
+.key.operator {
+  background: linear-gradient(145deg, var(--accent), #3444cc);
+  color: white;
+  font-weight: bold;
+}
+.key.danger {
+  color: white;
+  background: linear-gradient(135deg, #ff416c, #a20c43);
+}
+.key.equals {
+  grid-row: span 2;
+  background: linear-gradient(160deg, var(--accent), #635bff);
+  color: white;
+  font-size: 30px;
+  box-shadow: 0 0 22px var(--glow);
+}
+.key.zero { grid-column: span 2; }
+
+.bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.info-panel {
+  border: 1px solid #ffffff18;
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.info-panel h3 { margin: 0 0 8px; font-size: 14px; }
+#history {
+  font-size: 12px;
+  color: var(--muted);
+  max-height: 110px;
+  overflow: auto;
+}
+
+.history-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #ffffff12;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.history-item:hover { color: var(--accent); }
+
+#help {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 10px;
+}
+
+@media (max-width: 480px) {
+  .app { padding: 10px; gap: 12px; }
+  .keypad { gap: 6px; }
+  .key { border-radius: 11px; min-height: 48px; }
+  .display { padding: 13px; min-height: 135px; }
+  .theme { width: 68px; }
+}
+
+@media (min-width: 700px) {
+  .app { padding: 24px; gap: 18px; }
+  .keypad { gap: 12px; }
+  .key { min-height: 62px; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+  <div class="brand">
+    <div class="logo">∑</div>
+    <div>
+      <h1>Nova Calculator</h1>
+      <div class="subtitle">SCIENTIFIC CALCULATOR • PRO EDITION</div>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="small-btn" onclick="clearHistory()">History</button>
+    <button class="small-btn" onclick="toggleSound()" id="soundBtn">🔊 Sound</button>
+  </div>
+</header>
+
+<div>
+  <div class="subtitle" style="margin-bottom:8px">CHOOSE YOUR THEME</div>
+  <div class="themes" id="themes"></div>
+</div>
+
+<section class="display">
+  <div class="display-top">
+    <span id="modeLabel">DEGREE MODE</span>
+    <span>NOVA • READY</span>
+  </div>
+  <input id="expression" aria-label="Calculation expression"
+         placeholder="Enter a calculation..." autocomplete="off"
+         onkeydown="inputKey(event)">
+  <div id="result">0</div>
+</section>
+
+<div class="controls">
+  <div class="modes">
+    <button class="mode-btn active" id="degBtn" onclick="setMode('DEG')">DEG</button>
+    <button class="mode-btn" id="radBtn" onclick="setMode('RAD')">RAD</button>
+  </div>
+  <div class="memory">Memory: <span id="memory">0</span></div>
+  <div class="modes">
+    <button class="mode-btn" onclick="memoryAdd()">M+</button>
+    <button class="mode-btn" onclick="memoryRecall()">MR</button>
+    <button class="mode-btn" onclick="memoryClear()">MC</button>
+  </div>
+</div>
+
+<div class="keypad" id="keypad">
+  <button class="key function" onclick="fn('sin(')">sin</button>
+  <button class="key function" onclick="fn('cos(')">cos</button>
+  <button class="key function" onclick="fn('tan(')">tan</button>
+  <button class="key function" onclick="fn('log(')">log</button>
+  <button class="key function" onclick="fn('ln(')">ln</button>
+
+  <button class="key function" onclick="fn('asin(')">sin⁻¹</button>
+  <button class="key function" onclick="fn('acos(')">cos⁻¹</button>
+  <button class="key function" onclick="fn('atan(')">tan⁻¹</button>
+  <button class="key function" onclick="fn('sqrt(')">√</button>
+  <button class="key function" onclick="fn('cbrt(')">∛</button>
+
+  <button class="key function" onclick="add('(')">(</button>
+  <button class="key function" onclick="add(')')">)</button>
+  <button class="key function" onclick="add('π')">π</button>
+  <button class="key function" onclick="add('e')">e</button>
+  <button class="key danger" onclick="backspace()">⌫</button>
+
+  <button class="key" onclick="add('7')">7</button>
+  <button class="key" onclick="add('8')">8</button>
+  <button class="key" onclick="add('9')">9</button>
+  <button class="key operator" onclick="add('/')">÷</button>
+  <button class="key function" onclick="add('^2')">x²</button>
+
+  <button class="key" onclick="add('4')">4</button>
+  <button class="key" onclick="add('5')">5</button>
+  <button class="key" onclick="add('6')">6</button>
+  <button class="key operator" onclick="add('*')">×</button>
+  <button class="key function" onclick="add('^')">xʸ</button>
+
+  <button class="key" onclick="add('1')">1</button>
+  <button class="key" onclick="add('2')">2</button>
+  <button class="key" onclick="add('3')">3</button>
+  <button class="key operator" onclick="add('-')">−</button>
+  <button class="key function" onclick="fn('abs(')">abs</button>
+
+  <button class="key zero" onclick="add('0')">0</button>
+  <button class="key" onclick="add('.')">.</button>
+  <button class="key operator" onclick="add('+')">+</button>
+  <button class="key equals" onclick="calculate()">=</button>
+
+  <button class="key function" onclick="fn('fact(')">n!</button>
+  <button class="key function" onclick="fn('exp(')">eˣ</button>
+  <button class="key function" onclick="add('%')">%</button>
+  <button class="key function" onclick="add('Ans')">Ans</button>
+  <button class="key danger" onclick="clearAll()">AC</button>
+</div>
+
+<div class="bottom">
+  <section class="info-panel">
+    <h3>Calculation History</h3>
+    <div id="history">Your calculations will appear here.</div>
+  </section>
+  <section class="info-panel">
+    <h3>Scientific Tools</h3>
+    <div id="help">
+      • Trigonometry and inverse trig functions<br>
+      • Logarithms and natural logarithms<br>
+      • Powers, roots and factorials<br>
+      • Memory storage and calculation history<br>
+      • Ten colorful animated themes
+    </div>
+  </section>
+</div>
+
+<footer>Nova Scientific Calculator • Made for learning and everyday calculations</footer>
+</div>
+
+<script>
+const themes = [
+  {name:"Neon",bg:"#050914",panel:"#0c1628",key:"#12223a",accent:"#00aaff",glow:"rgba(0,170,255,.55)",text:"#f4f8ff"},
+  {name:"Clean",bg:"#eef4fc",panel:"#ffffff",key:"#e3ecf8",accent:"#1769ff",glow:"rgba(23,105,255,.25)",text:"#10203b"},
+  {name:"Galaxy",bg:"#100521",panel:"#200b38",key:"#32104d",accent:"#c026ff",glow:"rgba(192,38,255,.55)",text:"#fff4ff"},
+  {name:"Matrix",bg:"#020b06",panel:"#071a0c",key:"#10301a",accent:"#00ff78",glow:"rgba(0,255,120,.45)",text:"#e5ffed"},
+  {name:"Sunset",bg:"#230c08",panel:"#42170e",key:"#622514",accent:"#ff862e",glow:"rgba(255,134,46,.5)",text:"#fff4e8"},
+  {name:"Ocean",bg:"#031923",panel:"#073448",key:"#09516b",accent:"#00e5ff",glow:"rgba(0,229,255,.5)",text:"#e8fcff"},
+  {name:"Rose",bg:"#27091d",panel:"#45102f",key:"#641642",accent:"#ff55ad",glow:"rgba(255,85,173,.5)",text:"#fff0f8"},
+  {name:"Silver",bg:"#111923",panel:"#1c2a3a",key:"#30465d",accent:"#b7d9ff",glow:"rgba(183,217,255,.4)",text:"#f4f8ff"},
+  {name:"Gold",bg:"#171106",panel:"#2a200b",key:"#493612",accent:"#ffd45c",glow:"rgba(255,212,92,.45)",text:"#fff8df"},
+  {name:"Fire",bg:"#180606",panel:"#300909",key:"#501010",accent:"#ff2525",glow:"rgba(255,37,37,.5)",text:"#fff0f0"}
+];
+
+let mode = "DEG";
+let memory = 0;
+let answer = 0;
+let sound = false;
+let history = [];
+
+const expr = document.getElementById("expression");
+const result = document.getElementById("result");
+
+const themeContainer = document.getElementById("themes");
+themes.forEach((t,i) => {
+  const b = document.createElement("button");
+  b.className = "theme" + (i === 0 ? " active" : "");
+  b.style.setProperty("--swatch", t.accent);
+  b.innerHTML = `<span></span>${t.name}`;
+  b.title = t.name + " theme";
+  b.onclick = () => setTheme(i);
+  themeContainer.appendChild(b);
+});
+
+function setTheme(i) {
+  const t = themes[i];
+  const root = document.documentElement.style;
+  root.setProperty("--bg", t.bg);
+  root.setProperty("--panel", t.panel);
+  root.setProperty("--key", t.key);
+  root.setProperty("--accent", t.accent);
+  root.setProperty("--glow", t.glow);
+  root.setProperty("--text", t.text);
+  document.querySelectorAll(".theme").forEach((b,n) =>
+    b.classList.toggle("active", n === i)
+  );
+  document.querySelector('meta[name="theme-color"]').content = t.bg;
+  playSound();
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById("degBtn").classList.toggle("active", m === "DEG");
+  document.getElementById("radBtn").classList.toggle("active", m === "RAD");
+  document.getElementById("modeLabel").textContent =
+    m === "DEG" ? "DEGREE MODE" : "RADIAN MODE";
+  playSound();
+}
+
+function add(s) {
+  expr.value += s;
+  expr.focus();
+  playSound();
+}
+
+function fn(s) {
+  expr.value += s;
+  expr.focus();
+  playSound();
+}
+
+function backspace() {
+  expr.value = expr.value.slice(0,-1);
+  expr.focus();
+}
+
+function clearAll() {
+  expr.value = "";
+  result.textContent = "0";
+  expr.focus();
+  playSound();
+}
+
+function clearHistory() {
+  history = [];
+  document.getElementById("history").textContent =
+    "Your calculations will appear here.";
+}
+
+function inputKey(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    calculate();
+  }
+  if (e.key === "Escape") clearAll();
+}
+
+function factorial(n) {
+  if (n < 0 || !Number.isInteger(n) || n > 170)
+    throw Error("Factorial requires a whole number from 0 to 170");
+  let r = 1;
+  for (let i=2; i<=n; i++) r *= i;
+  return r;
+}
+
+function calculate() {
+  let s = expr.value.trim();
+  if (!s) return;
+
+  try {
+    // Convert display symbols to JavaScript math expressions.
+    s = s.replace(/×/g,"*").replace(/÷/g,"/");
+    s = s.replace(/π/g,"PI");
+    s = s.replace(/\^/g,"**");
+    s = s.replace(/(\d+(?:\.\d+)?)%/g,"($1/100)");
+    s = s.replace(/\bAns\b/g,"ANS");
+
+    // Add multiplication for common forms such as 2π and 2(3+4).
+    s = s.replace(/(\d)(PI|E|ANS|sqrt|sin|cos|tan|log|ln|abs|exp|fact|cbrt|asin|acos|atan|\()/g,"$1*$2");
+    s = s.replace(/\)(\d|PI|E|ANS|sqrt|sin|cos|tan|log|ln|abs|exp|fact|cbrt|asin|acos|atan|\()/g,")*$1");
+    s = s.replace(/\bPI\b/g,"Math.PI")
+         .replace(/\bE\b/g,"Math.E")
+         .replace(/\bANS\b/g,"ANS");
+
+    const toRadians = x => mode === "DEG" ? x * Math.PI / 180 : x;
+    const fromRadians = x => mode === "DEG" ? x * 180 / Math.PI : x;
+
+    // Expressions are restricted to calculator characters and known functions.
+    if (!/^[0-9+\-*/().,\sA-Za-z]*$/.test(s))
+      throw Error("Unsupported character");
+
+    const allowed = {
+      sin: x => Math.sin(toRadians(x)),
+      cos: x => Math.cos(toRadians(x)),
+      tan: x => Math.tan(toRadians(x)),
+      asin: x => fromRadians(Math.asin(x)),
+      acos: x => fromRadians(Math.acos(x)),
+      atan: x => fromRadians(Math.atan(x)),
+      sqrt: Math.sqrt,
+      cbrt: Math.cbrt,
+      log: Math.log10,
+      ln: Math.log,
+      abs: Math.abs,
+      exp: Math.exp,
+      fact: factorial,
+      ANS: answer,
+      Math: {PI: Math.PI, E: Math.E}
+    };
+
+    // Only evaluate after checking all identifier names.
+    const identifiers = s.match(/[A-Za-z]+/g) || [];
+    const permitted = ["sin","cos","tan","asin","acos","atan",
+      "sqrt","cbrt","log","ln","abs","exp","fact","Math","PI","E","ANS"];
+    if (identifiers.some(x => !permitted.includes(x)))
+      throw Error("Unknown function or symbol");
+
+    // Expose only calculator functions, not the whole browser environment.
+    const run = new Function(
+      "sin","cos","tan","asin","acos","atan","sqrt","cbrt",
+      "log","ln","abs","exp","fact","ANS","Math",
+      '"use strict"; return (' + s + ');'
+    );
+
+    const value = run(
+      allowed.sin,allowed.cos,allowed.tan,
+      allowed.asin,allowed.acos,allowed.atan,
+      allowed.sqrt,allowed.cbrt,allowed.log,
+      allowed.ln,allowed.abs,allowed.exp,
+      allowed.fact,answer, {PI:Math.PI,E:Math.E}
+    );
+
+    if (typeof value !== "number" || !Number.isFinite(value))
+      throw Error("Result is undefined");
+
+    answer = value;
+    result.textContent = Number(value.toPrecision(12)).toString();
+    history.unshift({expression:expr.value, result:result.textContent});
+    history = history.slice(0,30);
+    renderHistory();
+    playSound();
+  } catch (e) {
+    result.textContent = "Error";
+  }
+}
+
+function renderHistory() {
+  const h = document.getElementById("history");
+  h.innerHTML = "";
+  history.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "history-item";
+    div.textContent = item.expression + " = " + item.result;
+    div.onclick = () => {
+      expr.value = item.expression;
+      result.textContent = item.result;
+    };
+    h.appendChild(div);
+  });
+}
+
+function memoryAdd() {
+  const n = Number(result.textContent);
+  if (Number.isFinite(n)) memory += n;
+  document.getElementById("memory").textContent = memory;
+}
+
+function memoryRecall() {
+  add(String(memory));
+}
+
+function memoryClear() {
+  memory = 0;
+  document.getElementById("memory").textContent = "0";
+}
+
+function toggleSound() {
+  sound = !sound;
+  document.getElementById("soundBtn").textContent =
+    sound ? "🔊 Sound" : "🔇 Sound";
+  playSound();
+}
+
+function playSound() {
+  if (!sound) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.frequency.value = 520;
+    gain.gain.value = 0.025;
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + 0.04);
+    oscillator.onended = () => ctx.close();
+  } catch (e) {}
+}
+</script>
+</body>
+</html>
