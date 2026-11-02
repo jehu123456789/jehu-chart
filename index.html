@@ -685,6 +685,36 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
 
 <section class="page" id="page-home">
  <div class="hero"><h1>Welcome to<br><span>JehuApp!</span></h1><p>Connect with people, share your world, and discover opportunities.</p></div>
+
+
+  
+<div class="card">
+  <h3>🌍 Search the Web</h3>
+
+  <form action="https://www.google.com/search"
+        method="GET"
+        target="_blank"
+        style="display:flex;gap:8px">
+
+    <input
+      type="search"
+      name="q"
+      placeholder="Search anything on Google..."
+      required
+    >
+
+    <button class="primary" type="submit">
+      🔍 Search
+    </button>
+
+  </form>
+
+  <p class="muted">Powered by Google</p>
+</div>
+
+
+
+
  <div class="shortcuts">
   <button class="shortcut" onclick="go('chats')"><span>☏</span><b>Messages</b>Chat privately</button>
   <button class="shortcut" onclick="go('updates')"><span>◉</span><b>Updates</b>Share news</button>
