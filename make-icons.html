@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JehuApp Icon Maker</title>
+<style>
+body {
+  background:#071a25;
+  color:white;
+  font-family:Arial,sans-serif;
+  text-align:center;
+  padding:30px 15px;
+}
+button {
+  display:block;
+  width:100%;
+  max-width:330px;
+  margin:15px auto;
+  padding:16px;
+  border:0;
+  border-radius:12px;
+  background:#00d9a0;
+  color:#003326;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+canvas {
+  width:180px;
+  height:180px;
+  border-radius:25px;
+}
+</style>
+</head>
+<body>
+
+<h1>JehuApp Icon Maker</h1>
+<p>Your JehuApp Android icons</p>
+
+<canvas id="preview" width="512" height="512"></canvas>
+
+<button onclick="downloadIcon(192)">
+Download 192 × 192 Icon
+</button>
+
+<button onclick="downloadIcon(512)">
+Download 512 × 512 Icon
+</button>
+
+<script>
+function drawIcon(size) {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+
+  const ctx = canvas.getContext("2d");
+
+  // Background
+  ctx.fillStyle = "#071a25";
+  ctx.fillRect(0, 0, size, size);
+
+  // Green gradient logo
+  const gradient = ctx.createLinearGradient(
+    0, 0, size, size
+  );
+  gradient.addColorStop(0, "#00e6a8");
+  gradient.addColorStop(1, "#087da0");
+
+  // Rounded logo background
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.roundRect(
+    size * .16,
+    size * .16,
+    size * .68,
+    size * .68,
+    size * .20
+  );
+  ctx.fill();
+
+  // Speech bubble tail
+  ctx.beginPath();
+  ctx.moveTo(size * .32, size * .72);
+  ctx.lineTo(size * .25, size * .84);
+  ctx.lineTo(size * .48, size * .73);
+  ctx.closePath();
+  ctx.fill();
+
+  // Letter J
+  ctx.fillStyle = "#052b29";
+  ctx.font = `bold ${size * .48}px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("J", size * .50, size * .48);
+
+  // Small chat dots
+  ctx.fillStyle = "#ffffff";
+  [0.39, 0.50, 0.61].forEach(x => {
+    ctx.beginPath();
+    ctx.arc(size*x, size*.68, size*.025, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  return canvas;
+}
+
+function downloadIcon(size) {
+  const canvas = drawIcon(size);
+
+  const link = document.createElement("a");
+  link.download = `icon-${size}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+const preview = document.getElementById("preview");
+const ctx = preview.getContext("2d");
+const generated = drawIcon(512);
+ctx.drawImage(generated, 0, 0);
+</script>
+
+</body>
+</html>
