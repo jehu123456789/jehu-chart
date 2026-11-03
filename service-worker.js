@@ -1,57 +1,25 @@
-
-
-const CACHE_NAME = "jehuapp-v2";
-
-self.addEventListener("install", event => {
-  self.skipWaiting();
-});
-
-self.addEventListener("activate", event => {
-  event.waitUntil(self.clients.claim());
-});
-
-self.addEventListener("fetch", event => {
-  event.respondWith(fetch(event.request));
-});
-
- document.getElementById("webSearchForm")
-.addEventListener("submit", function(event) {
-   event.preventDefault();
-
-  const query = document.getElementById("webSearchInput")
-     .value.trim();
-
-  if (!query) return;
-
-  const searchURL =
-   "https://www.google.com/search?q=" +
-   encodeURIComponent(query) +
-    "&safe=active";
-
-   window.open(searchURL, "_blank", "noopener,noreferrer");
-});
-
-
-
-
 const CACHE_NAME = "jehuapp-v1";
 
-const FILES_TO_CACHE = [
+const APP_FILES = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/icon.png.png"
+  "/video.html",
+  "/sicentific.html",
+  "/icon-192.png",
+  "/icon-512.png"
 ];
 
+// Install and save the app files
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(FILES_TO_CACHE);
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(APP_FILES))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
+// Remove old caches
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -60,41 +28,55 @@ self.addEventListener("activate", event => {
           .filter(key => key !== CACHE_NAME)
           .map(key => caches.delete(key))
       )
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
+// Load pages and files
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
+  const request = event.request;
 
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+
+  // Do not cache Supabase requests
+  if (url.hostname.includes("supabase.co")) return;
+
+  // Pages: try internet first, then saved page
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(async () => {
+          return await caches.match(request) ||
+                 await caches.match("/index.html");
+        })
+    );
+    return;
+  }
+
+  // Other files: use saved copy first
   event.respondWith(
-    fetch(event.request).catch(() =>
-      caches.match(event.request).then(response =>
-        response || caches.match("/")
-      )
-    )
-  );
-});
+    caches.match(request).then(cached => {
+      if (cached) return cached;
 
-const CACHE_NAME = "jehuapp-v2";
-
-self.addEventListener("install", event => {
-  self.skipWaiting();
-});
-
-self.addEventListener("activate", event => {
-  event.waitUntil(
-    Promise.all([
-      self.clients.claim(),
-      caches.keys().then(keys =>
-        Promise.all(
-          keys
-            .filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-        )
-      )
-    ])
+      return fetch(request).then(response => {
+        if (response.ok && url.origin === self.location.origin) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(request, copy));
+        }
+        return response;
+      });
+    })
   );
 });
 
