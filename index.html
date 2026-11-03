@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,10 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" href="/icon.svg">
-<link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="/icon.png.png">
-
-<meta name="theme-color" content="#101827">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -514,6 +510,9 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
  <button onclick="go('profile')"><span>♙</span>Profile</button>
 </nav>
 
+
+
+
 <script>
 const SUPABASE_URL="https://gtegyhlnhkpuzztevjqw.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-LTIfVbvn4Byu5U_zCEeJw_GKhpZQTT";
@@ -530,7 +529,9 @@ function initials(s){
  return (s||"J").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase()||"J";
 }
 function note(id,msg,error=false){
- const el=$(id);el.textContent=msg;el.className=error?"notice error":"notice";
+ const el=$(id);
+ el.textContent=msg;
+ el.className=error?"notice error":"notice";
 }
 function client(){
  if(!window.supabase)throw Error("Supabase library failed to load. Check your internet.");
@@ -1123,6 +1124,11 @@ function playVideo(){
  $("videoArea").replaceChildren(v);
 }
 
+
+
+
+
+
 // Video calling: WebRTC carries camera/microphone media peer-to-peer.
 // Supabase Realtime Broadcast exchanges call offers, answers and ICE candidates.
 let callChannel=null;
@@ -1223,14 +1229,21 @@ function showActiveCallControls(){
  $("activeCallButtons").classList.remove("hidden");
 }
 
+/* Corrected camera and microphone setup */
 async function createCallPeer(){
  if(!navigator.mediaDevices?.getUserMedia){
   throw new Error("Camera and microphone access needs HTTPS and a supported browser.");
  }
+
  localCallStream=await navigator.mediaDevices.getUserMedia({
   audio:true,
-  video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}}
+  video:{
+   facingMode:"user",
+   width:{ideal:1280},
+   height:{ideal:720}
+  }
  });
+
  $("localCallVideo").srcObject=localCallStream;
  remoteCallStream=new MediaStream();
  $("remoteCallVideo").srcObject=remoteCallStream;
@@ -1238,7 +1251,9 @@ async function createCallPeer(){
  rtcPeer=new RTCPeerConnection({
   iceServers:[{urls:"stun:stun.l.google.com:19302"}]
  });
+
  localCallStream.getTracks().forEach(track=>rtcPeer.addTrack(track,localCallStream));
+
  rtcPeer.ontrack=event=>{
   if(event.streams&&event.streams[0]){
    $("remoteCallVideo").srcObject=event.streams[0];
@@ -1248,11 +1263,13 @@ async function createCallPeer(){
   }
   $("remoteCallVideo").play().catch(()=>{});
  };
+
  rtcPeer.onicecandidate=event=>{
   if(event.candidate&&callId){
    sendCallSignal("candidate",{candidate:event.candidate.toJSON()}).catch(err=>console.warn(err));
   }
  };
+
  rtcPeer.onconnectionstatechange=()=>{
   if(!rtcPeer)return;
   const state=rtcPeer.connectionState;
@@ -1261,6 +1278,7 @@ async function createCallPeer(){
   else if(state==="disconnected")setCallStatus("Connection interrupted. Trying to reconnect...");
   else if(state==="failed")setCallStatus("Connection failed. End the call and try again.");
  };
+
  return rtcPeer;
 }
 
@@ -1465,9 +1483,12 @@ init();
 </script>
 
 <script>
+/* Register the service worker once */
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("/service-worker.js");
+  navigator.serviceWorker.register("/service-worker.js")
+   .then(()=>console.log("JehuApp is ready!"))
+   .catch(error=>console.log("Service worker:",error));
  });
 }
 </script>
@@ -1505,15 +1526,9 @@ window.addEventListener("appinstalled",()=>{
 });
 </script>
 
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/service-worker.js")
-      .then(() => console.log("JehuApp is ready!"))
-      .catch(error => console.log(error));
-  });
-}
-</script>
-
 </body>
 </html>
+
+
+
+
