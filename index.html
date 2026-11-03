@@ -639,6 +639,44 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
  .mobile button{background:transparent;color:var(--muted);font-size:10px;padding:5px}
  .mobile span{display:block;font-size:19px;margin-bottom:3px}
 }
+
+
+
+
+
+
+.mobile {
+  display:flex;
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:100;
+  overflow-x:auto;
+  justify-content:flex-start;
+  background:#071a25;
+  border-top:1px solid #254657;
+  padding:7px 3px;
+}
+
+.mobile button,
+.mobile a {
+  flex:0 0 70px;
+  background:transparent;
+  color:white;
+  text-align:center;
+  text-decoration:none;
+  font-size:10px;
+  padding:5px 2px;
+}
+
+.mobile span {
+  display:block;
+  font-size:19px;
+  margin-bottom:3px;
+}
+
+
 </style>
 </head>
 
@@ -816,13 +854,22 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
 </div>
 </div>
 
+
+
+
 <nav class="mobile">
-<button onclick="go('home')"><span>⌂</span>Home</button>
-<button onclick="go('chats')"><span>☏</span>Chats</button>
-<button onclick="go('updates')"><span>◉</span>Updates</button>
-<button onclick="go('watch')"><span>▷</span>Watch</button>
-<button onclick="go('market')"><span>▣</span>Market</button>
+  <button onclick="go('home')"><span>⌂</span>Home</button>
+  <button onclick="go('chats')"><span>☏</span>Chats</button>
+  <button onclick="go('updates')"><span>◉</span>Updates</button>
+  <button onclick="go('watch')"><span>▷</span>Watch</button>
+  <button onclick="go('market')"><span>▣</span>Market</button>
+  <a href="./video.html"><span>🎬</span>Videos</a>
+  <a href="./sicentific.html"><span>🧮</span>Calculator</a>
+  <button onclick="go('profile')"><span>♙</span>Profile</button>
 </nav>
+
+
+
 
 <script>
 const SUPABASE_URL="https://gtegyhlnhkpuzztevjqw.supabase.co";
