@@ -4,18 +4,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JehuApp — Chat, Connect, Share & Video Call</title>
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#101827">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="JehuApp">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.png">
-<link rel="icon" type="image/png"
+<link rel="icon" href="/icon-192.png">
+<link rel="icon" href="/icon.svg">
 
-<title>JehuApp — Chat, Connect, Share</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23071a25' stroke='%2300d9a0' stroke-width='8'/%3E%3Ctext x='50' y='67' font-size='55' text-anchor='middle' fill='%2300d9a0'%3EJ%3C/text%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 :root{--bg:#071a25;--panel:#102b3b;--panel2:#17394a;--green:#00d9a0;--text:#f3f9fc;--muted:#a5bdca;--line:#254657}
 *{box-sizing:border-box}
@@ -23,10 +20,8 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-seri
 button,input,textarea,select{font:inherit}
 button{cursor:pointer;border:0;border-radius:10px;padding:11px 14px;transition:.2s}
 button:hover{filter:brightness(1.13)}
-button:disabled{opacity:.5;cursor:not-allowed}
 .primary{background:var(--green);color:#003326;font-weight:bold}
-.secondary{background:var(--panel2);color:white;border:1px solid var(--line)}
-.danger{background:#d92d4b;color:white}
+.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
 input,textarea,select{width:100%;padding:12px;margin:7px 0 13px;background:#071f2d;color:white;border:1px solid var(--line);border-radius:10px}
 textarea{resize:vertical;min-height:75px}
 label{font-size:13px;color:var(--muted)}
@@ -39,18 +34,16 @@ header{height:68px;display:flex;justify-content:space-between;align-items:center
 header .right{display:flex;align-items:center;gap:10px}
 .layout{max-width:1500px;margin:auto;display:grid;grid-template-columns:220px minmax(0,1fr)}
 aside{padding:18px 12px;border-right:1px solid var(--line);min-height:calc(100vh - 68px)}
-.nav{width:100%;display:block;text-align:left;background:transparent;color:white;margin:3px 0;padding:14px;text-decoration:none}
-.nav:hover,.nav.active{background:#075442;color:var(--green)}
+.nav{width:100%;display:block;text-align:left;background:transparent;color:var(--text);margin:3px 0;padding:14px}
+.nav.active,.nav:hover{background:#075442;color:var(--green)}
 main{padding:22px;min-width:0}
 .page{animation:show .25s}
 .card{background:var(--panel);border:1px solid var(--line);padding:17px;border-radius:16px;margin-bottom:14px;min-width:0}
 .hero{padding:30px;border-radius:18px;background:linear-gradient(115deg,#075267,#07513d);margin-bottom:15px}
-.hero h1{font-size:36px;margin:0 0 10px}
-.hero span{color:var(--green)}
+.hero h1{font-size:36px;margin:0 0 10px}.hero span{color:var(--green)}
 .shortcuts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.shortcut{background:var(--panel);color:white;text-align:left;border:1px solid var(--line);padding:15px;text-decoration:none;border-radius:10px}
-.shortcut b{display:block;margin-top:8px}
-.shortcut span{font-size:24px;color:var(--green)}
+.shortcut{background:var(--panel);color:white;text-align:left;border:1px solid var(--line);padding:15px}
+.shortcut b{display:block;margin-top:8px}.shortcut span{font-size:24px;color:var(--green)}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px}
 .avatar{width:42px;height:42px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,#00d9a0,#087da0);color:#002c25;display:grid;place-items:center;font-weight:bold}
 .chat-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:12px;min-height:530px}
@@ -62,19 +55,17 @@ main{padding:22px;min-width:0}
 .contact-info strong,.contact-info small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .contact-info small{color:var(--muted);margin-top:5px}
 .chat-window{display:flex;flex-direction:column;min-height:530px}
-.chat-head{display:flex;align-items:center;gap:8px;padding:13px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.chat-head .who{flex:1;min-width:100px}
+.chat-head{display:flex;align-items:center;gap:10px;padding:13px;border-bottom:1px solid var(--line)}
+.chat-head .who{flex:1;min-width:0}
 .messages{flex:1;min-height:300px;max-height:480px;overflow-y:auto;padding:14px;background:#0a202c}
-.bubble-row{display:flex;margin:9px 0}
-.bubble-row.mine{justify-content:flex-end}
+.bubble-row{display:flex;margin:9px 0}.bubble-row.mine{justify-content:flex-end}
 .bubble{max-width:82%;padding:10px 12px;background:#1a3a4b;border-radius:13px 13px 13px 3px;white-space:pre-wrap;overflow-wrap:anywhere}
 .mine .bubble{background:#075b46;border-radius:13px 13px 3px 13px}
 .bubble img{display:block;max-width:100%;max-height:280px;border-radius:8px;margin-bottom:5px}
-.bubble video,.bubble audio{max-width:100%}
 .time{font-size:10px;color:#c0d5dd;text-align:right;margin-top:5px}
-.compose{padding:10px;display:flex;align-items:flex-end;gap:7px;border-top:1px solid var(--line);flex-wrap:wrap}
-.compose textarea{flex:1;min-width:100px;margin:0;min-height:43px;max-height:120px}
-.attach{background:var(--panel2);color:var(--green);font-size:19px;padding:9px;cursor:pointer;border-radius:9px}
+.compose{padding:10px;display:flex;align-items:flex-end;gap:7px;border-top:1px solid var(--line)}
+.compose textarea{margin:0;min-height:43px;max-height:120px}
+.attach{background:var(--panel2);color:var(--green);font-size:21px;padding:9px}
 .empty{text-align:center;color:var(--muted);padding:30px 10px}
 .post-head{display:flex;align-items:center;gap:10px}
 .post-head div:nth-child(2){flex:1}
@@ -88,239 +79,220 @@ main{padding:22px;min-width:0}
 .notice.error{background:#542839}
 footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
 .mobile{display:none}
-.nav-link{display:block;text-decoration:none;color:white}
-.chat-tools{display:flex;gap:7px;flex-wrap:wrap;padding:9px;background:var(--panel);border-top:1px solid var(--line)}
-.chat-tools button,.picker button{background:var(--panel2);color:white;border:1px solid var(--line);padding:8px 11px}
-.picker{padding:10px;background:#0b2431;border-top:1px solid var(--line);display:flex;gap:7px;flex-wrap:wrap;max-height:150px;overflow:auto}
-.picker button{font-size:19px}
-.sticker{font-size:60px;text-align:center;animation:pop .7s infinite alternate}
-@keyframes pop{to{transform:scale(1.15) rotate(5deg)}}
 @keyframes show{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-#welcomeScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:radial-gradient(ellipse at 15% 5%,#075b59 0%,transparent 42%),radial-gradient(ellipse at 90% 90%,#07513d 0%,transparent 38%),#071a25}
-.welcome-wrap{width:min(100%,900px);margin:auto}
-.welcome-panel{background:#102b3bef;border:1px solid #315668;border-radius:24px;padding:clamp(22px,5vw,44px);text-align:center}
-.welcome-panel h1{font-size:clamp(30px,6vw,48px)}
-.welcome-panel h1 span{color:var(--green)}
-.welcome-lead{max-width:700px;margin:0 auto 22px;color:#c3d8e2;line-height:1.7}
-.welcome-features{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin:24px 0}
-.welcome-feature{background:#0a202c;border:1px solid var(--line);border-radius:14px;padding:15px;text-align:left}
-.welcome-feature .emoji{font-size:25px}
-.welcome-feature b{display:block;margin:7px 0}
-.welcome-feature p{color:var(--muted);font-size:13px;line-height:1.45}
-.welcome-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-.install-jehu-btn{background:#17394a;color:white;border:1px solid var(--green);padding:14px 22px;font-weight:bold}
-#videoCallModal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:#000e;overflow:auto}
-.video-call-box{width:min(100%,900px);max-height:95vh;overflow:auto;padding:20px;background:#102b3b;border:1px solid var(--green);border-radius:20px}
+@media(max-width:950px){.grid{grid-template-columns:1fr}.grid>.rightside{display:none}}
+@media(max-width:680px){
+ header{padding:0 12px;height:60px}.brand{font-size:21px}.layout{display:block}
+ aside{display:none}main{padding:12px 10px 82px}
+ .hero{padding:22px}.hero h1{font-size:29px}
+ .chat-layout{grid-template-columns:1fr}
+ .chat-sidebar{max-height:235px;overflow-y:auto}
+ .chat-window{min-height:430px}
+ .messages{min-height:240px}
+ .shortcuts{gap:6px}.shortcut{padding:10px 7px;font-size:12px}
+ .mobile{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:10;justify-content:space-around;background:#071a25f5;border-top:1px solid var(--line);padding:7px 0}
+ .mobile button{background:transparent;color:var(--muted);font-size:10px;padding:5px}
+ .mobile span{display:block;font-size:19px;margin-bottom:3px}
+}
+
+/* JehuApp video calls */
+#videoCallModal{
+ position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+ padding:16px;background:rgba(0,0,0,.88);overflow:auto
+}
+.video-call-box{
+ width:min(100%,900px);max-height:95vh;overflow:auto;padding:20px;
+ background:#102b3b;border:1px solid #00d9a0;border-radius:20px;
+ box-shadow:0 20px 70px #0009
+}
 .video-call-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.video-call-title-row h2{margin:0 0 5px}
+.video-call-title-row p{margin:0 0 12px}
 .call-video-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .call-video-tile{position:relative;min-width:0;background:#06131b;border:1px solid #315668;border-radius:14px;overflow:hidden;min-height:190px}
 .call-video-tile video{display:block;width:100%;height:100%;min-height:190px;max-height:58vh;object-fit:cover;background:#06131b}
-.call-video-tile span{position:absolute;left:10px;bottom:10px;padding:5px 9px;border-radius:8px;background:#0009;color:white;font-size:12px}
+.call-video-tile span{position:absolute;left:10px;bottom:10px;padding:5px 9px;border-radius:8px;background:#0009;color:#fff;font-size:12px}
 .call-controls{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:16px}
-.call-footnote{text-align:center;color:var(--muted);font-size:12px}
-@media(max-width:950px){.grid{grid-template-columns:1fr}.rightside{display:none}}
-@media(max-width:680px){
- header{padding:0 12px;height:60px}.brand{font-size:21px}
- .layout{display:block}aside{display:none}main{padding:12px 10px 82px}
- .hero{padding:22px}.hero h1{font-size:29px}
- .chat-layout{grid-template-columns:1fr}.chat-sidebar{max-height:235px;overflow-y:auto}
- .chat-window{min-height:430px}.messages{min-height:240px}
- .shortcuts{grid-template-columns:repeat(2,1fr);gap:6px}
- .shortcut{padding:10px 7px;font-size:12px}
- .mobile{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:10;justify-content:flex-start;overflow-x:auto;background:#071a25f5;border-top:1px solid var(--line);padding:6px 5px;gap:3px}
- .mobile button,.mobile a{min-width:62px;flex:0 0 auto;background:transparent;color:var(--muted);font-size:10px;padding:5px;text-align:center}
- .mobile span{display:block;font-size:19px;margin-bottom:3px}
- .welcome-features{grid-template-columns:repeat(2,1fr)}
- .welcome-panel{padding:22px 15px}
- .welcome-actions{display:grid;grid-template-columns:1fr}
- .welcome-actions button{width:100%}
- .call-video-grid{grid-template-columns:1fr}
- .call-video-tile video{max-height:30vh}
+.danger-call{background:#d92d4b;color:#fff;font-weight:bold}
+.call-footnote{margin:14px 0 0;text-align:center;color:#a5bdca;font-size:12px}
+@media(max-width:650px){
+ #videoCallModal{padding:8px;align-items:center}
+ .video-call-box{padding:13px;border-radius:15px}
+ .call-video-grid{grid-template-columns:1fr;gap:8px}
+ .call-video-tile{min-height:130px}
+ .call-video-tile video{min-height:130px;max-height:31vh}
+ .call-controls button{flex:1 1 100px}
 }
 </style>
-</head>
 
-<body>
+<style>
+/* First welcome screen */
+#welcomeScreen{
+ min-height:100vh;min-height:100svh;display:flex;align-items:center;justify-content:center;
+ padding:24px 16px;background:radial-gradient(ellipse at 15% 5%,#075b59 0%,transparent 42%),
+ radial-gradient(ellipse at 90% 90%,#07513d 0%,transparent 38%),#071a25;
+}
+.welcome-wrap{width:min(100%,900px);margin:auto}
+.welcome-top{display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.welcome-panel{background:#102b3beF;border:1px solid #315668;border-radius:24px;padding:clamp(22px,5vw,44px);box-shadow:0 18px 60px #0005;text-align:center}
+.welcome-panel h1{font-size:clamp(30px,6vw,48px);line-height:1.12;margin:12px 0;color:#f3f9fc}
+.welcome-panel h1 span{color:#00d9a0}
+.welcome-lead{max-width:700px;margin:0 auto 22px;color:#c3d8e2;font-size:clamp(15px,2.5vw,18px);line-height:1.7}
+.welcome-features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:24px 0}
+.welcome-feature{background:#0a202c;border:1px solid #254657;border-radius:14px;padding:15px;text-align:left;min-width:0}
+.welcome-feature .emoji{font-size:25px;display:block;margin-bottom:7px}
+.welcome-feature b{display:block;color:#f3f9fc;margin-bottom:5px}
+.welcome-feature p{color:#a5bdca;font-size:13px;line-height:1.45;margin:0}
+.welcome-actions{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px}
+.welcome-start{min-width:190px;padding:14px 22px;font-weight:bold}
+.install-jehu-btn{display:inline-flex;align-items:center;justify-content:center;min-width:190px;padding:14px 22px;border:1px solid #00d9a0;border-radius:12px;background:#17394a;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;box-shadow:0 5px 20px #0003}
+.install-jehu-btn:hover{filter:brightness(1.15)}
+#welcomeScreen .welcome-note{margin:17px 0 0;color:#a5bdca;font-size:12px}
+#app.hidden ~ .mobile{display:none!important}
+@media(max-width:680px){
+ #welcomeScreen{padding:16px 12px;align-items:flex-start}
+ .welcome-top{margin:12px 0 18px}
+ .welcome-panel{padding:22px 15px;border-radius:19px}
+ .welcome-features{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:20px 0}
+ .welcome-feature{padding:12px}
+ .welcome-feature p{font-size:12px}
+ .welcome-actions{display:grid;grid-template-columns:1fr;width:100%}
+ .welcome-actions button{width:100%}
+}
+</style>
 
-<section id="welcomeScreen">
- <div class="welcome-wrap">
-  <div class="brand" style="justify-content:center;margin-bottom:20px"><div class="logo">◎</div>Jehu<span>App</span></div>
-  <div class="welcome-panel">
-   <h1>You are welcome to<br><span>JehuApp Chat!</span></h1>
-   <p class="welcome-lead">Connect with people, chat privately, share pictures, videos and voice messages, make voice and video calls, post community updates, watch videos and discover products.</p>
-   <div class="welcome-features">
-    <div class="welcome-feature"><span class="emoji">💬</span><b>Private Chats</b><p>Talk one-to-one and keep conversations separate.</p></div>
-    <div class="welcome-feature"><span class="emoji">📸</span><b>Share Media</b><p>Send pictures, videos, audio and voice messages.</p></div>
-    <div class="welcome-feature"><span class="emoji">🌍</span><b>Community Updates</b><p>Share posts with the JehuApp community.</p></div>
-    <div class="welcome-feature"><span class="emoji">📞</span><b>Voice & Video Calls</b><p>Call your contacts from your chats.</p></div>
-    <div class="welcome-feature"><span class="emoji">🛍️</span><b>Marketplace</b><p>Discover products and list items.</p></div>
-    <div class="welcome-feature"><span class="emoji">🎬</span><b>Video Library</b><p>Visit the separate Video Library page.</p></div>
-   </div>
-   <div class="welcome-actions">
-    <button class="install-jehu-btn" id="installJehu">📲 INSTALL JEHUAPP</button>
-    <button class="primary" onclick="continueFromWelcome()">GET STARTED →</button>
-   </div>
-   <p class="muted">JehuApp · Connect · Chat · Share · Discover</p>
-  </div>
- </div>
-</section>
+<style>
+/* JehuApp chat personalisation */
+.nav-link{display:block;text-decoration:none;color:var(--text)}
+.nav-link:hover{color:var(--green)}
+.chat-personal-tools{display:flex;gap:7px;flex-wrap:wrap;padding:9px 10px 0;background:var(--panel);border-top:1px solid var(--line)}
+.chat-personal-tools button{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:8px 11px}
+.chat-picker{padding:10px;background:#0b2431;border-top:1px solid var(--line);display:flex;gap:7px;flex-wrap:wrap;max-height:150px;overflow:auto}
+.chat-picker button{background:#17394a;color:white;border:1px solid #315668;min-width:40px;padding:8px;font-size:20px}
+.chat-picker .colour-choice{width:34px;min-width:34px;height:34px;padding:0;border:2px solid #fff8;border-radius:50%}
+.chat-picker .animation-choice{font-size:13px;min-width:76px}
+.compose{flex-wrap:wrap}
+.compose textarea{flex:1 1 150px;min-width:80px}
+.compose .send-button{flex:0 0 auto}
+.bubble img.chat-image{display:block;max-width:min(100%,320px);max-height:280px;object-fit:contain;border-radius:9px;margin-bottom:5px}
+.animated-sticker{display:grid;place-items:center;min-width:110px;min-height:92px;font-size:62px;line-height:1;animation:stickerPop .75s ease-in-out infinite alternate;transform-origin:center}
+.anim-hearts{filter:drop-shadow(0 4px 12px #ff4d8d88)}
+.anim-party{animation:stickerSpin 1.8s ease-in-out infinite}
+.anim-sparkle{filter:drop-shadow(0 0 13px #ffe66d);animation:stickerTwinkle .8s ease-in-out infinite alternate}
+.anim-laugh{animation:stickerBounce .55s ease-in-out infinite alternate}
+.anim-wow{animation:stickerPop .6s ease-in-out infinite alternate}
+@keyframes stickerPop{from{transform:scale(.86) rotate(-5deg)}to{transform:scale(1.08) rotate(5deg)}}
+@keyframes stickerSpin{0%,100%{transform:rotate(-8deg) scale(.95)}50%{transform:rotate(8deg) scale(1.1)}}
+@keyframes stickerTwinkle{from{opacity:.65;transform:scale(.85)}to{opacity:1;transform:scale(1.15)}}
+@keyframes stickerBounce{from{transform:translateY(3px) rotate(-5deg)}to{transform:translateY(-7px) rotate(5deg)}}
+@media(max-width:680px){
+ .mobile{justify-content:flex-start;overflow-x:auto;overflow-y:hidden;gap:2px;padding:6px 5px;scrollbar-width:thin}
+ .mobile button,.mobile a{min-width:64px;flex:0 0 auto}
+ .mobile a.nav-link{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:10px;padding:5px 3px}
+ .mobile a.nav-link span{display:block;font-size:19px;margin-bottom:3px}
+ .chat-layout{gap:8px}
+ .chat-window{min-height:460px}
+ .messages{min-height:250px}
+ .chat-personal-tools{gap:5px;padding:7px}
+ .chat-personal-tools button{font-size:13px;padding:8px}
+ .compose{gap:5px;padding:8px}
+ .compose .attach{font-size:18px;padding:8px}
+}
+</style>
 
-<section id="authScreen" class="hidden">
- <div class="auth">
-  <div class="brand"><div class="logo">◎</div>Jehu<span>App</span></div>
-  <h2>Connect. Share. Discover.</h2>
-  <button class="primary" id="loginTab" onclick="setMode('login')">Log in</button>
-  <button class="secondary" id="signupTab" onclick="setMode('signup')">Create account</button>
-  <form id="authForm">
-   <div id="nameBox" class="hidden"><label>Display name</label><input id="authName" maxlength="60"></div>
-   <label>Email</label><input id="email" type="email" required>
-   <label>Password</label><input id="password" type="password" minlength="6" required>
-   <button class="primary" id="authButton" style="width:100%">Log in</button>
-  </form>
-  <div id="authStatus" class="muted"></div>
- </div>
-</section>
-
-<div id="app" class="hidden">
-<header>
- <div class="brand"><div class="logo">◎</div>Jehu<span>App</span></div>
- <div class="right"><span id="headerName" class="muted"></span><button class="secondary" onclick="logout()">Log out</button></div>
-</header>
-
-<div class="layout">
-<aside>
- <button class="nav active" onclick="go('home')">⌂ Home</button>
- <button class="nav" onclick="go('chats')">☏ Messages</button>
- <button class="nav" onclick="go('updates')">◉ Updates</button>
- <button class="nav" onclick="go('watch')">▷ Watch</button>
- <a class="nav nav-link" href="./video.html">🎬 Video Library</a>
- <button class="nav" onclick="go('market')">▣ Marketplace</button>
- <a class="nav nav-link" href="./sicentific.html">🧮 Scientific Calculator</a>
- <button class="nav" onclick="go('profile')">♙ Profile</button>
- <div class="card"><b>Grow together ✦</b><p class="muted">Connect and discover new opportunities.</p></div>
-</aside>
-
-<main><div class="grid"><div>
-
-<section class="page" id="page-home">
- <div class="hero"><h1>Welcome to<br><span>JehuApp!</span></h1><p>Connect with people, share your world, and discover opportunities.</p></div>
- <div class="shortcuts">
-  <button class="shortcut" onclick="go('chats')"><span>☏</span><b>Messages</b>Chat privately</button>
-  <button class="shortcut" onclick="go('updates')"><span>◉</span><b>Updates</b>Share news</button>
-  <button class="shortcut" onclick="go('market')"><span>▣</span><b>Marketplace</b>Buy and sell</button>
-  <a class="shortcut" href="./video.html"><span>🎬</span><b>Video Library</b>Watch videos</a>
-  <a class="shortcut" href="./sicentific.html"><span>🧮</span><b>Calculator</b>Open calculator</a>
- </div>
- <div class="card"><h3>Share a post</h3><textarea id="homePost" placeholder="What's on your mind?"></textarea><button class="primary" onclick="post('homePost')">Publish</button></div>
- <h3>Community feed</h3><div id="homeFeed"></div>
-</section>
-
-<section class="page hidden" id="page-chats">
- <div class="chat-layout">
-  <div class="chat-sidebar">
-   <h2>Chats</h2>
-   <input id="contactSearch" placeholder="Search chats..." oninput="renderContacts()">
-   <details style="margin-bottom:10px">
-    <summary style="cursor:pointer;padding:8px">＋ New chat</summary>
-    <p class="muted">Paste the other person's user ID.</p>
-    <input id="peerId" placeholder="User ID">
-    <button class="primary" style="width:100%" onclick="openChat()">Find person</button>
-    <div id="chatStatus" class="muted"></div>
-   </details>
-   <div id="contactList"><div class="empty">Start a new chat.</div></div>
-  </div>
-  <div class="chat-window">
-   <div class="chat-head">
-    <div class="avatar" id="chatAvatar">J</div>
-    <div class="who"><b id="chatTitle">JehuApp Chat</b><div id="chatSubtitle" class="muted">Choose a conversation</div></div>
-    <button class="secondary" onclick="loadMessages()">↻</button>
-    <button class="secondary" onclick="startVoiceCall()">📞 Voice</button>
-    <button class="primary" onclick="startVideoCall()">📹 Video</button>
-   </div>
-   <div id="messages" class="messages"><div class="empty">Your private conversation appears here.</div></div>
-   <div id="imagePreview" class="hidden" style="padding:8px"></div>
-   <div class="chat-tools">
-    <button onclick="toggleChatPanel('emojiPanel')">😊 Emoji</button>
-    <button onclick="toggleChatPanel('colourPanel')">🎨 Colour</button>
-    <button onclick="toggleChatPanel('animationPanel')">✨ Animations</button>
-   </div>
-   <div id="emojiPanel" class="picker hidden">
-    <button onclick="insertEmoji('😀')">😀</button><button onclick="insertEmoji('😂')">😂</button><button onclick="insertEmoji('🥰')">🥰</button><button onclick="insertEmoji('😍')">😍</button><button onclick="insertEmoji('😎')">😎</button><button onclick="insertEmoji('😭')">😭</button><button onclick="insertEmoji('🤔')">🤔</button><button onclick="insertEmoji('👍')">👍</button><button onclick="insertEmoji('🙏')">🙏</button><button onclick="insertEmoji('🔥')">🔥</button><button onclick="insertEmoji('❤️')">❤️</button><button onclick="insertEmoji('🎉')">🎉</button><button onclick="insertEmoji('✨')">✨</button>
-   </div>
-   <div id="colourPanel" class="picker hidden">
-    <button style="background:#075b46" onclick="setBubbleColor('#075b46')">Green</button>
-    <button style="background:#1d4ed8" onclick="setBubbleColor('#1d4ed8')">Blue</button>
-    <button style="background:#6d28d9" onclick="setBubbleColor('#6d28d9')">Purple</button>
-    <button style="background:#9f1239" onclick="setBubbleColor('#9f1239')">Pink</button>
-    <button style="background:#0f766e" onclick="setBubbleColor('#0f766e')">Teal</button>
-   </div>
-   <div id="animationPanel" class="picker hidden">
-    <button onclick="sendAnimation('hearts')">💖 Hearts</button><button onclick="sendAnimation('party')">🎉 Party</button><button onclick="sendAnimation('sparkle')">✨ Sparkles</button><button onclick="sendAnimation('laugh')">😂 Laugh</button><button onclick="sendAnimation('wow')">🤩 Wow</button>
-   </div>
-   <form id="messageForm" class="compose">
-    <label class="attach">📷<input id="imageFile" type="file" accept="image/*" hidden></label>
-    <label class="attach">🎬<input id="videoFile" type="file" accept="video/*" hidden></label>
-    <label class="attach">🎵<input id="audioFile" type="file" accept="audio/*" hidden></label>
-    <label class="attach">GIF<input id="gifFile" type="file" accept="image/gif,.gif" hidden></label>
-    <button class="attach" type="button" id="recordVoiceBtn" onclick="toggleVoiceRecording()">🎙️</button>
-    <textarea id="messageText" maxlength="3000" placeholder="Message..."></textarea>
-    <button class="primary" type="submit">➤</button>
-   </form>
-  </div>
- </div>
-</section>
-
-<section class="page hidden" id="page-updates">
- <div class="card"><h2>Community Updates</h2><textarea id="updatePost" placeholder="Share an update..."></textarea><button class="primary" onclick="post('updatePost')">Publish update</button></div>
- <div id="updatesFeed"></div>
-</section>
-
-<section class="page hidden" id="page-watch">
- <div class="card"><h2>JehuApp Watch 🎬</h2><p class="muted">Play a direct video link.</p><input id="videoUrl" type="url" placeholder="https://example.com/video.mp4"><button class="primary" onclick="playVideo()">Play video</button><div id="videoArea"></div></div>
 </section>
 
 <section class="page hidden" id="page-market">
  <div class="card"><h2>Marketplace 🛍️</h2>
-  <form id="productForm">
-   <label>Product name</label><input id="productName" required maxlength="100">
-   <label>Description</label><textarea id="productDescription" maxlength="1000"></textarea>
-   <label>Price in naira (₦)</label><input id="productPrice" type="number" min="0" step=".01" required>
-   <label>Category</label><select id="productCategory"><option>Food & Agriculture</option><option>Electronics</option><option>Fashion</option><option>Home</option><option>Other</option></select>
-   <button class="primary">List product</button>
-  </form><div id="marketStatus" class="muted"></div>
- </div><div id="productList"></div>
+ <form id="productForm">
+ <label>Product name</label><input id="productName" required maxlength="100">
+ <label>Description</label><textarea id="productDescription" maxlength="1000"></textarea>
+ <label>Price in naira (₦)</label><input id="productPrice" type="number" min="0" step=".01" required>
+ <label>Category</label>
+ <select id="productCategory">
+ <option>Food & Agriculture</option>
+ <option>Electronics</option>
+ <option>Fashion</option>
+ <option>Home</option>
+ <option>Other</option>
+ </select>
+ <button class="primary">List product</button>
+ </form>
+ <div id="marketStatus" class="muted"></div>
+ </div>
+ <div id="productList"></div>
 </section>
 
 <section class="page hidden" id="page-profile">
- <div class="card"><h2>Your Profile</h2>
-  <form id="profileForm"><label>Display name</label><input id="displayName" maxlength="60" required><label>Email</label><input id="profileEmail" readonly><button class="primary">Save profile</button></form>
-  <div id="profileStatus" class="muted"></div><p class="muted">Your user ID — share it with a person you want to chat with.</p><code id="userId" style="overflow-wrap:anywhere"></code><br><button class="secondary" onclick="copyId()">Copy ID</button>
+ <div class="card">
+ <h2>Your Profile</h2>
+ <form id="profileForm">
+ <label>Display name</label>
+ <input id="displayName" maxlength="60" required>
+ <label>Email</label>
+ <input id="profileEmail" readonly>
+ <button class="primary">Save profile</button>
+ </form>
+ <div id="profileStatus" class="muted"></div>
+ <p class="muted">Your user ID — share it with a person you want to chat with.</p>
+ <code id="userId" style="overflow-wrap:anywhere"></code>
+ <br><button class="secondary" onclick="copyId()">Copy ID</button>
  </div>
 </section>
+</div>
 
-</div><div class="rightside">
- <div class="card"><h3>Quick start</h3><p class="muted">Open Messages to find someone by their user ID.</p><button class="primary" onclick="go('chats')">Open chats</button></div>
- <div class="card"><h3>Marketplace</h3><div id="featuredProducts" class="muted">Products appear here.</div><button class="secondary" onclick="go('market')">Browse products</button></div>
-</div></div>
+<div class="rightside">
+ <div class="card">
+ <h3>Quick start</h3>
+ <p class="muted">Open Messages to find someone by their user ID.</p>
+ <button class="primary" onclick="go('chats')">Open chats</button>
+ </div>
+ <div class="card">
+ <h3>Marketplace</h3>
+ <div id="featuredProducts" class="muted">Products appear here.</div>
+ <button class="secondary" onclick="go('market')">Browse products</button>
+ </div>
+</div>
+</div>
 <footer>JehuApp · Connect · Share · Discover</footer>
 </main>
 </div>
 </div>
 
-<div id="videoCallModal" class="hidden" role="dialog" aria-modal="true">
+<!-- JehuApp video call window -->
+<div id="videoCallModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="callHeading">
  <div class="video-call-box">
-  <div class="video-call-title-row"><div><h2 id="callHeading">JehuApp Call</h2><p id="callStatusText" class="muted">Waiting for call...</p></div><button class="secondary" onclick="endVideoCall()">✕</button></div>
-  <div class="call-video-grid">
-   <div class="call-video-tile"><video id="remoteCallVideo" autoplay playsinline></video><span id="remoteCallLabel">Other person</span></div>
-   <div class="call-video-tile local-call-tile"><video id="localCallVideo" autoplay muted playsinline></video><span>You</span></div>
+  <div class="video-call-title-row">
+   <div>
+    <h2 id="callHeading">JehuApp Video Call</h2>
+    <p id="callStatusText" class="muted" aria-live="polite">Waiting for call...</p>
+   </div>
+   <button class="secondary" type="button" onclick="endVideoCall()">✕</button>
   </div>
-  <div id="incomingCallButtons" class="call-controls hidden"><button class="primary" id="acceptCallButton" onclick="acceptIncomingCall()">📞 Accept call</button><button class="danger" onclick="declineIncomingCall()">Decline</button></div>
-  <div id="activeCallButtons" class="call-controls hidden"><button class="secondary" id="muteCallButton" onclick="toggleCallMute(this)">🎙️ Mute</button><button class="secondary" id="cameraCallButton" onclick="toggleCallCamera(this)">📷 Camera off</button><button class="danger" onclick="endVideoCall()">☎ End call</button></div>
-  <p class="call-footnote">Allow camera and microphone access when your browser asks.</p>
+  <div class="call-video-grid">
+   <div class="call-video-tile">
+    <video id="remoteCallVideo" autoplay playsinline></video>
+    <span id="remoteCallLabel">Other person</span>
+   </div>
+   <div class="call-video-tile local-call-tile">
+    <video id="localCallVideo" autoplay muted playsinline></video>
+    <span>You</span>
+   </div>
+  </div>
+  <div id="incomingCallButtons" class="call-controls hidden">
+   <button class="primary" type="button" onclick="acceptIncomingCall()">📹 Accept</button>
+   <button class="danger-call" type="button" onclick="declineIncomingCall()">Decline</button>
+  </div>
+  <div id="activeCallButtons" class="call-controls hidden">
+   <button class="secondary" id="muteCallButton" type="button" onclick="toggleCallMute(this)">🎙️ Mute</button>
+   <button class="secondary" id="cameraCallButton" type="button" onclick="toggleCallCamera(this)">📷 Camera off</button>
+   <button class="danger-call" type="button" onclick="endVideoCall()">☎ End call</button>
+  </div>
+  <p class="call-footnote">Your browser will ask permission to use your camera and microphone.</p>
  </div>
 </div>
 
-<nav class="mobile">
+<nav class="mobile" aria-label="JehuApp navigation">
  <button onclick="go('home')"><span>⌂</span>Home</button>
  <button onclick="go('chats')"><span>☏</span>Chats</button>
  <button onclick="go('updates')"><span>◉</span>Updates</button>
@@ -336,469 +308,1380 @@ const SUPABASE_URL="https://gtegyhlnhkpuzztevjqw.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-LTIfVbvn4Byu5U_zCEeJw_GKhpZQTT";
 const IMAGE_BUCKET="jehu-chat-images";
 
-let db=null,user=null,savedUser=null,peer=null,contacts=[],selectedImage=null,selectedMedia=null,mediaRecorder=null,voiceChunks=[],mode="login",selectedBubbleColor="#075b46";
+let db=null;
+let user=null;
+let savedUser=null;
+let peer=null;
+let contacts=[];
+let selectedImage=null;
+let selectedMedia=null;
+let mediaRecorder=null;
+let voiceChunks=[];
+let mode="login";
+let selectedBubbleColor="#075b46";
 
 const $=id=>document.getElementById(id);
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function initials(s){return(s||"J").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase()||"J";}
-function note(id,msg,error=false){const el=$(id);el.textContent=msg;el.className=error?"notice error":"notice";}
+
+function esc(s){
+ return String(s??"").replace(/[&<>"']/g,c=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+ }[c]));
+}
+
+function initials(s){
+ return (s||"J").trim().split(/\s+/).slice(0,2)
+ .map(x=>x[0]||"").join("").toUpperCase()||"J";
+}
+
+function note(id,msg,error=false){
+ const el=$(id);
+ el.textContent=msg;
+ el.className=error?"notice error":"notice";
+}
+
 function client(){
- if(!window.supabase)throw Error("Supabase library failed to load. Check your internet.");
- if(!db)db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+ if(!window.supabase)
+  throw Error("Supabase library failed to load. Check your internet.");
+
+ if(!db)
+  db=window.supabase.createClient(
+   SUPABASE_URL,
+   SUPABASE_PUBLISHABLE_KEY
+  );
+
  return db;
 }
+
 function setMode(m){
- mode=m;$("nameBox").classList.toggle("hidden",m!=="signup");$("authName").required=m==="signup";
- $("authButton").textContent=m==="signup"?"Create account":"Log in";$("authStatus").textContent="";
+ mode=m;
+ $("nameBox").classList.toggle("hidden",m!=="signup");
+ $("authName").required=m==="signup";
+ $("authButton").textContent=m==="signup"?"Create account":"Log in";
+ $("authStatus").textContent="";
 }
+
 function continueFromWelcome(){
  $("welcomeScreen").classList.add("hidden");
- if(savedUser)start(savedUser).catch(e=>{$("authScreen").classList.remove("hidden");note("authStatus",e.message,true);});
- else $("authScreen").classList.remove("hidden");
+
+ if(savedUser){
+  start(savedUser).catch(err=>{
+   $("authScreen").classList.remove("hidden");
+   note("authStatus",err.message||"Could not open JehuApp.",true);
+  });
+ }else{
+  $("authScreen").classList.remove("hidden");
+ }
 }
+
 $("authForm").addEventListener("submit",async e=>{
- e.preventDefault();$("authButton").disabled=true;
+ e.preventDefault();
+ $("authButton").disabled=true;
+
  try{
-  const c=client(),email=$("email").value.trim(),password=$("password").value;
+  const c=client();
+  const email=$("authEmail").value.trim();
+  const password=$("authPassword").value;
+
   if(mode==="signup"){
-   const {data,error}=await c.auth.signUp({email,password,options:{data:{display_name:$("authName").value.trim()}}});
+   const {data,error}=await c.auth.signUp({
+    email,
+    password,
+    options:{
+     data:{display_name:$("authName").value.trim()}
+    }
+   });
+
    if(error)throw error;
-   if(!data.session){note("authStatus","Check your email for confirmation, then log in.");return;}
+
+   if(!data.session){
+    note("authStatus","Check your email for confirmation, then log in.");
+    return;
+   }
+
    await start(data.user);
+
   }else{
-   const {data,error}=await c.auth.signInWithPassword({email,password});
-   if(error)throw error;await start(data.user);
+   const {data,error}=await c.auth.signInWithPassword({
+    email,
+    password
+   });
+
+   if(error)throw error;
+   await start(data.user);
   }
- }catch(e){note("authStatus",e.message,true);}finally{$("authButton").disabled=false;}
+
+ }catch(e){
+  note("authStatus",e.message,true);
+ }finally{
+  $("authButton").disabled=false;
+ }
 });
+
 async function start(u){
- user=u;savedUser=u;$("welcomeScreen").classList.add("hidden");$("authScreen").classList.add("hidden");$("app").classList.remove("hidden");
- $("profileEmail").value=u.email||"";$("userId").textContent=u.id;
- await ensureProfile();go("home");await Promise.all([loadPosts(),loadProducts(),loadRecentChats()]);
+ user=u;
+ savedUser=u;
+
+ $("welcomeScreen").classList.add("hidden");
+ $("authScreen").classList.add("hidden");
+ $("app").classList.remove("hidden");
+
+ $("profileEmail").value=u.email||"";
+ $("userId").textContent=u.id;
+
+ await ensureProfile();
+ go("home");
+
+ await Promise.all([
+  loadPosts(),
+  loadProducts(),
+  loadRecentChats()
+ ]);
 }
+
 async function ensureProfile(){
- const fallback=user.user_metadata?.display_name||(user.email||"JehuApp").split("@")[0];
- const {error}=await db.from("jehu_profiles").upsert({id:user.id,display_name:fallback},{onConflict:"id",ignoreDuplicates:true});
+ const fallback=user.user_metadata?.display_name||
+ (user.email||"JehuApp").split("@")[0];
+
+ const {error}=await db.from("jehu_profiles").upsert({
+  id:user.id,
+  display_name:fallback
+ },{
+  onConflict:"id",
+  ignoreDuplicates:true
+ });
+
  if(error)console.warn(error.message);
- const {data}=await db.from("jehu_profiles").select("display_name").eq("id",user.id).maybeSingle();
- const name=data?.display_name||fallback;$("displayName").value=name;$("headerName").textContent=name;
+
+ const {data}=await db.from("jehu_profiles")
+ .select("display_name")
+ .eq("id",user.id)
+ .maybeSingle();
+
+ const name=data?.display_name||fallback;
+
+ $("displayName").value=name;
+ $("headerName").textContent=name;
+ $("headerName").title=user.email||"";
 }
+
 async function logout(){
- if(callId)await closeVideoCall();
- if(callChannel&&db){await db.removeChannel(callChannel);callChannel=null;callChannelTopic=null;}
- if(db)await db.auth.signOut();user=null;peer=null;savedUser=null;
- $("app").classList.add("hidden");$("authScreen").classList.remove("hidden");setMode("login");
+ if(typeof callId!=="undefined"&&callId)
+  await closeVideoCall();
+
+ if(typeof callChannel!=="undefined"&&callChannel&&db){
+  await db.removeChannel(callChannel);
+  callChannel=null;
+  callChannelTopic=null;
+ }
+
+ if(db)await db.auth.signOut();
+
+ user=null;
+ peer=null;
+
+ $("app").classList.add("hidden");
+ $("authScreen").classList.add("hidden");
+ $("welcomeScreen").classList.remove("hidden");
+
+ setMode("login");
 }
+
 function go(page){
- document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
+ document.querySelectorAll(".page").forEach(p=>{
+  p.classList.add("hidden");
+ });
+
  $("page-"+page).classList.remove("hidden");
- document.querySelectorAll("aside .nav").forEach(n=>n.classList.remove("active"));
- if(page==="chats")loadRecentChats();if(page==="updates")loadPosts();if(page==="market")loadProducts();
+
+ document.querySelectorAll(".nav").forEach(n=>{
+  n.classList.remove("active");
+
+  if(n.getAttribute("onclick")===`go('${page}')`)
+   n.classList.add("active");
+ });
+
+ if(page==="chats")loadRecentChats();
+ if(page==="updates")loadPosts();
+ if(page==="market")loadProducts();
 }
-function time(v){const d=new Date(v);return isNaN(d)?"":d.toLocaleString();}
+
+function time(v){
+ const d=new Date(v);
+ return isNaN(d)?"":d.toLocaleString();
+}
+
 async function loadPosts(){
  if(!user)return;
- for(const id of ["homeFeed","updatesFeed"])$(id).innerHTML='<div class="empty">Loading...</div>';
- const {data,error}=await db.from("jehu_posts").select("id,author_id,content,created_at").order("created_at",{ascending:false}).limit(50);
- if(error){for(const id of ["homeFeed","updatesFeed"])$(id).textContent=error.message;return;}
- if(!data.length){for(const id of ["homeFeed","updatesFeed"])$(id).innerHTML='<div class="empty">No posts yet.</div>';return;}
+
+ for(const id of ["homeFeed","updatesFeed"])
+  $(id).innerHTML='<div class="empty">Loading...</div>';
+
+ const {data,error}=await db.from("jehu_posts")
+ .select("id,author_id,content,created_at")
+ .order("created_at",{ascending:false})
+ .limit(50);
+
+ if(error){
+  for(const id of ["homeFeed","updatesFeed"])
+   $(id).textContent=error.message;
+  return;
+ }
+
+ if(!data.length){
+  for(const id of ["homeFeed","updatesFeed"])
+   $(id).innerHTML='<div class="empty">No posts yet.</div>';
+  return;
+ }
+
  const ids=[...new Set(data.map(p=>p.author_id))];
- const {data:profiles}=await db.from("jehu_profiles").select("id,display_name").in("id",ids);
+
+ const {data:profiles}=await db.from("jehu_profiles")
+ .select("id,display_name")
+ .in("id",ids);
+
  const html=data.map(p=>{
-  const name=p.author_id===user.id?$("displayName").value:((profiles||[]).find(x=>x.id===p.author_id)?.display_name||"JehuApp member");
-  return `<article class="card"><div class="post-head"><div class="avatar">${esc(initials(name))}</div><div><b>${esc(name)}</b><div class="muted">${esc(time(p.created_at))}</div></div></div><p class="post-content">${esc(p.content)}</p>${p.author_id===user.id?`<button class="secondary" onclick="deletePost('${esc(p.id)}')">Delete</button>`:""}</article>`;
+  const name=p.author_id===user.id
+   ?$("displayName").value
+   :((profiles||[]).find(x=>x.id===p.author_id)?.display_name||"JehuApp member");
+
+  return `<article class="card">
+   <div class="post-head">
+    <div class="avatar">${esc(initials(name))}</div>
+    <div>
+     <b>${esc(name)}</b>
+     <div class="muted">${esc(time(p.created_at))}</div>
+    </div>
+   </div>
+   <p class="post-content">${esc(p.content)}</p>
+   ${p.author_id===user.id
+    ?`<button class="secondary" onclick="deletePost('${esc(p.id)}')">Delete</button>`
+    :""}
+  </article>`;
  }).join("");
- $("homeFeed").innerHTML=html;$("updatesFeed").innerHTML=html;
+
+ $("homeFeed").innerHTML=html;
+ $("updatesFeed").innerHTML=html;
 }
+
 async function post(inputId){
- const content=$(inputId).value.trim();if(!content)return alert("Write something first.");
- const {error}=await db.from("jehu_posts").insert({author_id:user.id,content});
- if(error)return alert(error.message);$(inputId).value="";await loadPosts();
+ const content=$(inputId).value.trim();
+
+ if(!content)return alert("Write something first.");
+
+ const {error}=await db.from("jehu_posts").insert({
+  author_id:user.id,
+  content
+ });
+
+ if(error)return alert(error.message);
+
+ $(inputId).value="";
+ await loadPosts();
 }
+
 async function deletePost(id){
  if(!confirm("Delete this post?"))return;
- const {error}=await db.from("jehu_posts").delete().eq("id",id).eq("author_id",user.id);
- if(error)alert(error.message);else loadPosts();
+
+ const {error}=await db.from("jehu_posts")
+ .delete()
+ .eq("id",id)
+ .eq("author_id",user.id);
+
+ if(error)alert(error.message);
+ else loadPosts();
 }
+
 async function openChat(){
- const id=$("peerId").value.trim();if(!id)return note("chatStatus","Paste a user ID first.");
+
+   const id=$("peerId").value.trim();
+ if(!id)return note("chatStatus","Paste a user ID first.");
  if(id===user.id)return note("chatStatus","You cannot message yourself.");
  const {data,error}=await db.from("jehu_profiles").select("id,display_name").eq("id",id).maybeSingle();
  if(error)return note("chatStatus",error.message,true);
- if(!data)return note("chatStatus","Profile not found. Check the user ID.",true);
- if(callId&&peer&&peer.id!==data.id)return note("chatStatus","End your current call before switching chats.",true);
+ if(!data)return note("chatStatus","Profile not found. Check the user ID.");
+ if(callId && peer && peer.id!==data.id){return note("chatStatus","End your current video call before switching chats.",true);}
  peer={id:data.id,name:data.display_name||"JehuApp member"};
  selectedBubbleColor=localStorage.getItem(bubbleColorKey())||"#075b46";
- $("chatTitle").textContent=peer.name;$("chatAvatar").textContent=initials(peer.name);
- $("chatSubtitle").textContent="Private conversation";$("chatStatus").textContent="Chat opened.";
- renderContacts();connectCallChannel().catch(err=>console.warn("Call channel:",err.message));await loadMessages();
+ $("chatTitle").textContent=peer.name;
+ $("chatAvatar").textContent=initials(peer.name);
+ $("chatSubtitle").textContent="Private conversation";
+ $("chatStatus").textContent="Chat opened.";
+ renderContacts();
+ connectCallChannel().catch(err=>{
+  console.warn("Video-call channel:",err.message);
+  $("chatStatus").textContent="Chat opened. Video calling setup: "+err.message;
+ });
+ await loadMessages();
 }
-async function selectContact(id){$("peerId").value=id;await openChat();}
+
+async function selectContact(id){
+ $("peerId").value=id;
+ await openChat();
+}
+
 async function loadRecentChats(){
  if(!user)return;
- const {data,error}=await db.from("jehu_messages").select("sender_id,recipient_id,body,created_at").or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`).order("created_at",{ascending:false}).limit(200);
- if(error){$("contactList").textContent="Unable to load chats: "+error.message;return;}
- const ids=[...new Set((data||[]).map(m=>m.sender_id===user.id?m.recipient_id:m.sender_id))];
- if(!ids.length){contacts=[];$("contactList").innerHTML='<div class="empty">No chats yet. Start a new chat.</div>';return;}
- const {data:profiles,error:pe}=await db.from("jehu_profiles").select("id,display_name").in("id",ids);
- if(pe){$("contactList").textContent="Unable to load contact names.";return;}
- contacts=ids.map(id=>{const p=(profiles||[]).find(x=>x.id===id);const m=data.find(x=>x.sender_id===id||x.recipient_id===id);return{id,name:p?.display_name||"JehuApp member",last:m?.body||""};});
+ const {data,error}=await db.from("jehu_messages")
+ .select("sender_id,recipient_id,body,created_at")
+ .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+ .order("created_at",{ascending:false}).limit(200);
+
+ if(error){
+  $("contactList").textContent="Unable to load chats: "+error.message;
+  return;
+ }
+
+ const ids=[...new Set((data||[]).map(m=>
+  m.sender_id===user.id?m.recipient_id:m.sender_id
+ ))];
+
+ if(!ids.length){
+  contacts=[];
+  $("contactList").innerHTML='<div class="empty">No chats yet. Start a new chat.</div>';
+  return;
+ }
+
+ const {data:profiles,error:pe}=await db.from("jehu_profiles")
+ .select("id,display_name").in("id",ids);
+
+ if(pe){
+  $("contactList").textContent="Unable to load contact names.";
+  return;
+ }
+
+ contacts=ids.map(id=>{
+  const p=(profiles||[]).find(x=>x.id===id);
+  const m=data.find(x=>x.sender_id===id||x.recipient_id===id);
+  return {
+   id,
+   name:p?.display_name||"JehuApp member",
+   last:m?.body||"",
+   date:m?.created_at
+  };
+ });
  renderContacts();
 }
+
 function messagePreview(body){
- let v=String(body||"").replace(/^STYLE:#[0-9a-fA-F]{6}\n/,"");
- if(v.startsWith("IMG:"))return"📷 Picture";if(v.startsWith("GIF:"))return"🎞️ GIF";
- if(v.startsWith("VIDEO:"))return"🎬 Video";if(v.startsWith("AUDIO:")||v.startsWith("VOICE:"))return"🎵 Audio message";
- if(v.startsWith("ANIM:"))return"✨ Animated sticker";return v;
+ let value=String(body||"").replace(/^STYLE:#[0-9a-fA-F]{6}\n/,"");
+ if(value.startsWith("IMG:"))return "📷 Picture";
+ if(value.startsWith("GIF:"))return "🎞️ GIF";
+ if(value.startsWith("VIDEO:"))return "🎬 Video";
+ if(value.startsWith("AUDIO:")||value.startsWith("VOICE:"))return "🎵 Audio message";
+ if(value.startsWith("ANIM:"))return "✨ Animated sticker";
+ return value;
 }
+
 function renderContacts(){
  const search=($("contactSearch")?.value||"").toLowerCase();
  const filtered=contacts.filter(c=>c.name.toLowerCase().includes(search));
- $("contactList").innerHTML=filtered.length?filtered.map(c=>`<button class="contact ${peer?.id===c.id?"active":""}" onclick="selectContact('${esc(c.id)}')"><div class="avatar">${esc(initials(c.name))}</div><div class="contact-info"><strong>${esc(c.name)}</strong><small>${esc(messagePreview(c.last))}</small></div></button>`).join(""):'<div class="empty">No matching chats.</div>';
+
+ $("contactList").innerHTML=filtered.length
+ ?filtered.map(c=>`
+  <button class="contact ${peer?.id===c.id?"active":""}"
+   onclick="selectContact('${esc(c.id)}')">
+   <div class="avatar">${esc(initials(c.name))}</div>
+   <div class="contact-info">
+    <strong>${esc(c.name)}</strong>
+    <small>${esc(messagePreview(c.last))}</small>
+   </div>
+  </button>`).join("")
+ :'<div class="empty">No matching chats.</div>';
 }
-function pairPath(a,b){return[a,b].sort().join("/");}
-function bubbleColorKey(){return"jehuapp-chat-colour:"+pairPath(user?.id||"guest",peer?.id||"guest");}
-function toggleChatPanel(id){["emojiPanel","colourPanel","animationPanel"].forEach(p=>$(p).classList.toggle("hidden",p!==id||!$(p).classList.contains("hidden")));}
+
+function pairPath(a,b){
+ return [a,b].sort().join("/");
+}
+
+function bubbleColorKey(){
+ return "jehuapp-chat-colour:"+pairPath(user?.id||"guest",peer?.id||"guest");
+}
+
+function toggleChatPanel(id){
+ ["emojiPanel","colourPanel","animationPanel"].forEach(panel=>{
+  $(panel).classList.toggle(
+   "hidden",
+   panel!==id||!$(panel).classList.contains("hidden")
+  );
+ });
+}
+
 function insertEmoji(emoji){
- const f=$("messageText"),a=f.selectionStart??f.value.length,b=f.selectionEnd??f.value.length;
- f.value=f.value.slice(0,a)+emoji+f.value.slice(b);f.focus();f.setSelectionRange(a+emoji.length,a+emoji.length);
+ const field=$("messageText");
+ const start=field.selectionStart??field.value.length;
+ const end=field.selectionEnd??field.value.length;
+ field.value=field.value.slice(0,start)+emoji+field.value.slice(end);
+ const pos=start+emoji.length;
+ field.focus();
+ field.setSelectionRange(pos,pos);
 }
-function setBubbleColor(c){
- if(!/^#[0-9a-f]{6}$/i.test(c))return;selectedBubbleColor=c;if(peer)localStorage.setItem(bubbleColorKey(),c);$("colourPanel").classList.add("hidden");
+
+function setBubbleColor(colour){
+ if(!/^#[0-9a-f]{6}$/i.test(colour))return;
+ selectedBubbleColor=colour;
+ if(peer)localStorage.setItem(bubbleColorKey(),colour);
+ $("colourPanel").classList.add("hidden");
 }
+
 async function sendAnimation(kind){
  if(!peer)return alert("Open a conversation first.");
- if(!["hearts","party","sparkle","laugh","wow"].includes(kind))return;
- const {error}=await db.from("jehu_messages").insert({sender_id:user.id,recipient_id:peer.id,body:"STYLE:"+selectedBubbleColor+"\nANIM:"+kind});
- if(error)return alert(error.message);$("animationPanel").classList.add("hidden");await loadMessages();await loadRecentChats();
+ const allowed=["hearts","party","sparkle","laugh","wow"];
+ if(!allowed.includes(kind))return;
+
+ try{
+  const body="STYLE:"+selectedBubbleColor+"\nANIM:"+kind;
+  const {error}=await db.from("jehu_messages").insert({
+   sender_id:user.id,
+   recipient_id:peer.id,
+   body
+  });
+  if(error)throw error;
+
+  $("animationPanel").classList.add("hidden");
+  await loadMessages();
+  await loadRecentChats();
+ }catch(err){
+  alert("Could not send animation: "+err.message);
+ }
 }
-async function uploadMedia(file){
- if(!file)throw Error("Choose a file first.");
- if(file.size>25*1024*1024)throw Error("Choose a file smaller than 25 MB.");
- const name=(file.name||"media").replace(/[^a-zA-Z0-9._-]/g,"_");
- const path=pairPath(user.id,peer.id)+"/"+user.id+"-"+Date.now()+"-"+name;
- const {error}=await db.storage.from(IMAGE_BUCKET).upload(path,file,{contentType:file.type||"application/octet-stream",upsert:false});
- if(error)throw error;return path;
+
+async function uploadImage(file){
+ if(!file.type.startsWith("image/"))throw Error("Choose an image file.");
+ if(file.size>5*1024*1024)throw Error("Please choose an image smaller than 5 MB.");
+
+ const path=pairPath(user.id,peer.id)+"/"+user.id+"-"+Date.now()+"-"+Math.random().toString(36).slice(2)+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+
+ const {error}=await db.storage.from(IMAGE_BUCKET).upload(path,file,{
+  contentType:file.type,
+  upsert:false
+ });
+ if(error)throw error;
+ return path;
 }
+
 async function imageUrl(path){
  const {data,error}=await db.storage.from(IMAGE_BUCKET).createSignedUrl(path,3600);
- if(error)throw error;return data.signedUrl;
+ if(error)throw error;
+ return data.signedUrl;
 }
+
+async function uploadMedia(file){
+ if(!file)throw Error("Choose a file first.");
+ if(file.size>25*1024*1024)throw Error("Please choose a file smaller than 25 MB.");
+
+ const safeName=(file.name||"media").replace(/[^a-zA-Z0-9._-]/g,"_");
+ const path=pairPath(user.id,peer.id)+"/"+user.id+"-"+Date.now()+"-"+safeName;
+
+ const {error}=await db.storage.from(IMAGE_BUCKET).upload(path,file,{
+  contentType:file.type||"application/octet-stream",
+  upsert:false
+ });
+ if(error)throw error;
+ return path;
+}
+
 function chooseMedia(kind,file){
- if(!file)return;selectedImage=null;selectedMedia={kind,file};
- $("imageFile").value="";const box=$("imagePreview");box.replaceChildren();
- const label=document.createElement("span");label.textContent=kind+" selected: "+file.name+" (max 25 MB). ";box.append(label);
- const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Remove";
- remove.onclick=()=>{selectedMedia=null;["videoFile","audioFile","gifFile"].forEach(id=>$(id).value="");box.replaceChildren();box.classList.add("hidden");};
- box.append(remove);box.classList.remove("hidden");
+ if(!file)return;
+
+ selectedImage=null;
+ selectedMedia={kind,file};
+ $("imageFile").value="";
+
+ const box=$("imagePreview");
+ box.replaceChildren();
+
+ if(kind==="GIF"){
+  const preview=document.createElement("img");
+  preview.src=URL.createObjectURL(file);
+  preview.alt="GIF preview";
+  preview.style.maxWidth="130px";
+  preview.style.maxHeight="100px";
+  box.append(preview);
+ }
+
+ const label=document.createElement("span");
+ label.textContent=kind+" selected: "+file.name+" (max 25 MB). ";
+ box.append(label);
+
+ const remove=document.createElement("button");
+ remove.type="button";
+ remove.className="secondary";
+ remove.textContent="Remove";
+ remove.onclick=()=>{
+  selectedMedia=null;
+  $("videoFile").value="";
+  $("audioFile").value="";
+  $("gifFile").value="";
+  box.replaceChildren();
+  box.classList.add("hidden");
+ };
+ box.append(remove);
+ box.classList.remove("hidden");
 }
+
 async function toggleVoiceRecording(){
  const button=$("recordVoiceBtn");
- if(mediaRecorder&&mediaRecorder.state==="recording"){mediaRecorder.stop();button.textContent="🎙️";return;}
- if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)return alert("Voice recording needs a supported browser and HTTPS.");
+
+ if(mediaRecorder&&mediaRecorder.state==="recording"){
+  mediaRecorder.stop();
+  button.textContent="🎙️";
+  return;
+ }
+
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
+  alert("Voice recording is not supported in this browser. Try an updated Chrome browser.");
+  return;
+ }
+
  try{
-  const stream=await navigator.mediaDevices.getUserMedia({audio:true});voiceChunks=[];
-  mediaRecorder=new MediaRecorder(stream);mediaRecorder.ondataavailable=e=>{if(e.data.size)voiceChunks.push(e.data);};
-  mediaRecorder.onstop=()=>{const type=mediaRecorder.mimeType||"audio/webm";const file=new File([new Blob(voiceChunks,{type})],"voice-message.webm",{type});chooseMedia("VOICE",file);stream.getTracks().forEach(t=>t.stop());button.textContent="🎙️";};
-  mediaRecorder.start();button.textContent="⏹";
- }catch(e){alert("Microphone permission was not granted: "+e.message);}
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  voiceChunks=[];
+  mediaRecorder=new MediaRecorder(stream);
+
+  mediaRecorder.ondataavailable=e=>{
+   if(e.data.size)voiceChunks.push(e.data);
+  };
+
+  mediaRecorder.onstop=()=>{
+   const type=mediaRecorder.mimeType||"audio/webm";
+   const file=new File([new Blob(voiceChunks,{type})],"voice-message.webm",{type});
+   chooseMedia("VOICE",file);
+   stream.getTracks().forEach(track=>track.stop());
+   button.textContent="🎙️";
+  };
+
+  mediaRecorder.start();
+  button.textContent="⏹";
+ }catch(err){
+  alert("Microphone permission was not granted: "+err.message);
+ }
 }
+
 async function loadMessages(){
  if(!user||!peer)return;
+
  $("messages").innerHTML='<div class="empty">Loading chat history...</div>';
+
  const filter=`and(sender_id.eq.${user.id},recipient_id.eq.${peer.id}),and(sender_id.eq.${peer.id},recipient_id.eq.${user.id})`;
- const {data,error}=await db.from("jehu_messages").select("id,sender_id,recipient_id,body,created_at").or(filter).order("created_at",{ascending:true}).limit(200);
- if(error){$("messages").textContent="Unable to load history: "+error.message;return;}
- if(!data.length){$("messages").innerHTML='<div class="empty">No messages yet. Say hello!</div>';return;}
+
+ const {data,error}=await db.from("jehu_messages")
+ .select("id,sender_id,recipient_id,body,created_at")
+ .or(filter)
+ .order("created_at",{ascending:false})
+ .limit(200);
+
+ if(error){
+  $("messages").textContent="Unable to load history: "+error.message;
+  return;
+ }
+
+ data.reverse();
+
+ if(!data.length){
+  $("messages").innerHTML='<div class="empty">No messages yet. Say hello!</div>';
+  return;
+ }
+
  const rendered=[];
+
  for(const m of data){
-  const mine=m.sender_id===user.id;let raw=m.body||"",colour="",content="";
-  const sm=raw.match(/^STYLE:(#[0-9a-fA-F]{6})\n/);if(sm){colour=sm[1];raw=raw.slice(sm[0].length);}
-  const anim=raw.match(/^ANIM:(hearts|party|sparkle|laugh|wow)$/);
-  if(anim){const stickers={hearts:"💖",party:"🎉",sparkle:"✨",laugh:"😂",wow:"🤩"};content=`<div class="sticker">${stickers[anim[1]]}</div>`;}
-  else{
-   const mm=raw.match(/^(IMG|GIF|VIDEO|AUDIO|VOICE):([^\n]+)(?:\n([\s\S]*))?$/);
-   if(mm){
-    const kind=mm[1],path=mm[2],caption=mm[3]||"";
+  const mine=m.sender_id===user.id;
+  let rawBody=m.body||"",colour="",content="";
+
+  const styleMatch=rawBody.match(/^STYLE:(#[0-9a-fA-F]{6})\n/);
+  if(styleMatch){
+   colour=styleMatch[1];
+   rawBody=rawBody.slice(styleMatch[0].length);
+  }
+
+  const animation=rawBody.match(/^ANIM:(hearts|party|sparkle|laugh|wow)$/);
+
+  if(animation){
+   const stickers={
+    hearts:"💖",
+    party:"🎉",
+    sparkle:"✨",
+    laugh:"😂",
+    wow:"🤩"
+   };
+   content=`<div class="animated-sticker anim-${animation[1]}">${stickers[animation[1]]}</div>`;
+  }else{
+   const mediaMatch=rawBody.match(/^(IMG|GIF|VIDEO|AUDIO|VOICE):([^\n]+)(?:\n([\s\S]*))?$/);
+
+   if(mediaMatch){
+    const kind=mediaMatch[1];
+    const path=mediaMatch[2];
+    const caption=mediaMatch[3]||"";
+
     try{
      const url=await imageUrl(path);
-     if(kind==="IMG"||kind==="GIF")content=`<a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="Shared picture"></a>`;
-     else if(kind==="VIDEO")content=`<video controls playsinline><source src="${esc(url)}"></video>`;
-     else content=`<audio controls><source src="${esc(url)}"></audio>`;
+
+     if(kind==="IMG"||kind==="GIF"){
+      content=`<a href="${esc(url)}" target="_blank" rel="noopener"><img class="chat-image" src="${esc(url)}" alt="${kind==="GIF"?"Animated GIF":"Picture message"}"></a>`;
+     }else if(kind==="VIDEO"){
+      content=`<video controls playsinline preload="metadata" style="display:block;max-width:100%;max-height:280px;border-radius:8px"><source src="${esc(url)}"></video>`;
+     }else{
+      content=`<audio controls preload="metadata" style="max-width:100%"><source src="${esc(url)}"></audio>`;
+     }
+
      if(caption)content+=`<div>${esc(caption)}</div>`;
-    }catch{content="<i>Media unavailable</i>";}
-   }else content=esc(raw);
+    }catch{
+     content='<i>Media unavailable</i>';
+    }
+   }else if(rawBody.startsWith("IMG:")){
+    try{
+     const url=await imageUrl(rawBody.slice(4));
+     content=`<a href="${esc(url)}" target="_blank" rel="noopener"><img class="chat-image" src="${esc(url)}" alt="Picture message"></a>`;
+    }catch{
+     content='<i>Picture unavailable</i>';
+    }
+   }else{
+    content=esc(rawBody);
+   }
   }
-  rendered.push(`<div class="bubble-row ${mine?"mine":""}"><div class="bubble"${colour?` style="background:${colour}"`:""}>${content}<div class="time">${esc(time(m.created_at))}</div></div></div>`);
+
+  const inlineStyle=colour?` style="background:${colour};"`:"";
+
+  rendered.push(`
+   <div class="bubble-row ${mine?"mine":""}">
+    <div class="bubble"${inlineStyle}>
+     ${content}
+     <div class="time">${esc(time(m.created_at))}</div>
+    </div>
+   </div>
+  `);
  }
- $("messages").innerHTML=rendered.join("");$("messages").scrollTop=$("messages").scrollHeight;
+
+ $("messages").innerHTML=rendered.join("");
+ $("messages").scrollTop=$("messages").scrollHeight;
 }
-["videoFile","audioFile","gifFile"].forEach(id=>$(id).addEventListener("change",e=>chooseMedia(id==="videoFile"?"VIDEO":id==="audioFile"?"AUDIO":"GIF",e.target.files[0])));
+
+$("videoFile").addEventListener("change",e=>chooseMedia("VIDEO",e.target.files[0]));
+$("audioFile").addEventListener("change",e=>chooseMedia("AUDIO",e.target.files[0]));
+$("gifFile").addEventListener("change",e=>chooseMedia("GIF",e.target.files[0]));
+
 $("imageFile").addEventListener("change",e=>{
- selectedImage=e.target.files[0]||null;selectedMedia=null;const box=$("imagePreview");box.replaceChildren();
+ selectedImage=e.target.files[0]||null;
+ selectedMedia=null;
+
+ const box=$("imagePreview");
+ box.replaceChildren();
+
  if(selectedImage){
-  const img=document.createElement("img");img.src=URL.createObjectURL(selectedImage);img.style.maxWidth="130px";img.style.maxHeight="100px";box.append(img);
-  const b=document.createElement("button");b.type="button";b.className="secondary";b.textContent="Remove";
-  b.onclick=()=>{selectedImage=null;$("imageFile").value="";box.replaceChildren();box.classList.add("hidden");};box.append(b);box.classList.remove("hidden");
- }else box.classList.add("hidden");
+  const img=document.createElement("img");
+  img.src=URL.createObjectURL(selectedImage);
+  img.style.maxWidth="130px";
+  img.style.maxHeight="100px";
+  img.style.borderRadius="8px";
+  box.append(img);
+
+  const cancel=document.createElement("button");
+  cancel.type="button";
+  cancel.className="secondary";
+  cancel.textContent="Remove";
+  cancel.onclick=()=>{
+   selectedImage=null;
+   $("imageFile").value="";
+   box.classList.add("hidden");
+   box.replaceChildren();
+  };
+  box.append(cancel);
+  box.classList.remove("hidden");
+ }
 });
+
 $("messageForm").addEventListener("submit",async e=>{
- e.preventDefault();if(!peer)return alert("Open a conversation first.");
- const text=$("messageText").value.trim();if(!text&&!selectedImage&&!selectedMedia)return;
- const button=e.submitter;if(button)button.disabled=true;
+ e.preventDefault();
+ if(!peer)return alert("Open a conversation first.");
+
+ const text=$("messageText").value.trim();
+ if(!text&&!selectedImage&&!selectedMedia)return;
+
+ const button=e.submitter;
+ if(button)button.disabled=true;
+
  try{
   let body=text;
-  if(selectedImage){const path=await uploadMedia(selectedImage);body="IMG:"+path+(text?"\n"+text:"");}
-  else if(selectedMedia){const path=await uploadMedia(selectedMedia.file);body=selectedMedia.kind+":"+path+(text?"\n"+text:"");}
+
+  if(selectedImage){
+   const path=await uploadImage(selectedImage);
+   body="IMG:"+path+(text?"\n"+text:"");
+  }else if(selectedMedia){
+   const path=await uploadMedia(selectedMedia.file);
+   body=selectedMedia.kind+":"+path+(text?"\n"+text:"");
+  }
+
   body="STYLE:"+selectedBubbleColor+"\n"+body;
-  const {error}=await db.from("jehu_messages").insert({sender_id:user.id,recipient_id:peer.id,body});
+
+  const {error}=await db.from("jehu_messages").insert({
+   sender_id:user.id,
+   recipient_id:peer.id,
+   body
+  });
+
   if(error)throw error;
-  $("messageText").value="";selectedImage=null;selectedMedia=null;
-  ["imageFile","videoFile","audioFile","gifFile"].forEach(id=>$(id).value="");
-  $("imagePreview").replaceChildren();$("imagePreview").classList.add("hidden");
-  await loadMessages();await loadRecentChats();
- }catch(err){alert("Could not send message: "+err.message);}finally{if(button)button.disabled=false;}
+
+  $("messageText").value="";
+  selectedImage=null;
+  selectedMedia=null;
+  $("imageFile").value="";
+  $("videoFile").value="";
+  $("audioFile").value="";
+  $("gifFile").value="";
+  $("imagePreview").replaceChildren();
+  $("imagePreview").classList.add("hidden");
+
+  await loadMessages();
+  await loadRecentChats();
+
+ }catch(err){
+  alert("Could not send message: "+err.message);
+ }finally{
+  if(button)button.disabled=false;
+ }
 });
+
 $("profileForm").addEventListener("submit",async e=>{
- e.preventDefault();const name=$("displayName").value.trim();if(!name)return;
- const {error}=await db.from("jehu_profiles").upsert({id:user.id,display_name:name},{onConflict:"id"});
+ e.preventDefault();
+
+ const name=$("displayName").value.trim();
+ if(!name)return;
+
+ const {error}=await db.from("jehu_profiles").upsert({
+  id:user.id,
+  display_name:name
+ },{onConflict:"id"});
+
  if(error)return note("profileStatus",error.message,true);
- $("headerName").textContent=name;note("profileStatus","Profile saved.");loadPosts();
+
+ $("headerName").textContent=name;
+ note("profileStatus","Profile saved.");
+ loadPosts();
 });
-async function copyId(){try{await navigator.clipboard.writeText(user.id);alert("User ID copied.");}catch{alert("Select and copy the ID shown on your profile.");}}
+
+async function copyId(){
+ try{
+  await navigator.clipboard.writeText(user.id);
+  alert("User ID copied.");
+ }catch{
+  alert("Select and copy the ID shown on your profile.");
+ }
+}
+
 $("productForm").addEventListener("submit",async e=>{
- e.preventDefault();const price=Number($("productPrice").value);
- const {error}=await db.from("jehu_products").insert({seller_id:user.id,name:$("productName").value.trim(),description:$("productDescription").value.trim(),price,category:$("productCategory").value});
+ e.preventDefault();
+
+ const price=Number($("productPrice").value);
+
+ const {error}=await db.from("jehu_products").insert({
+  seller_id:user.id,
+  name:$("productName").value.trim(),
+  description:$("productDescription").value.trim(),
+  price,
+  category:$("productCategory").value
+ });
+
  if(error)return note("marketStatus",error.message,true);
- $("productForm").reset();note("marketStatus","Product listed.");await loadProducts();
+
+ $("productForm").reset();
+ note("marketStatus","Product listed.");
+ await loadProducts();
 });
+
 async function loadProducts(){
  if(!user)return;
- const {data,error}=await db.from("jehu_products").select("id,seller_id,name,description,price,category,created_at").order("created_at",{ascending:false}).limit(50);
- if(error){$("productList").textContent=error.message;return;}
- if(!data.length){$("productList").innerHTML='<div class="empty">No products listed yet.</div>';$("featuredProducts").textContent="No products yet.";return;}
- $("productList").innerHTML=data.map(p=>`<div class="card product"><div style="font-size:28px">▣</div><div class="info"><b>${esc(p.name)}</b><p class="muted">${esc(p.category||"Other")} · ${esc(p.description||"")}</p><p class="price">₦${Number(p.price).toLocaleString("en-NG")}</p>${p.seller_id===user.id?`<button class="secondary" onclick="deleteProduct('${esc(p.id)}')">Delete</button>`:`<button class="secondary" onclick="messageSeller('${esc(p.seller_id)}')">Message seller</button>`}</div></div>`).join("");
- $("featuredProducts").innerHTML=data.slice(0,3).map(p=>`<p>${esc(p.name)} — <span class="price">₦${Number(p.price).toLocaleString("en-NG")}</span></p>`).join("");
+
+ const {data,error}=await db.from("jehu_products")
+ .select("id,seller_id,name,description,price,category,created_at")
+ .order("created_at",{ascending:false})
+ .limit(50);
+
+ if(error){
+  $("productList").textContent=error.message;
+  return;
+ }
+
+ if(!data.length){
+  $("productList").innerHTML='<div class="empty">No products listed yet.</div>';
+  $("featuredProducts").textContent="No products yet.";
+  return;
+ }
+
+ const html=data.map(p=>`
+  <div class="card product">
+   <div style="font-size:28px">▣</div>
+   <div class="info">
+    <b>${esc(p.name)}</b>
+    <p class="muted">${esc(p.category||"Other")} · ${esc(p.description||"")}</p>
+    <p class="price">₦${Number(p.price).toLocaleString("en-NG")}</p>
+    ${p.seller_id===user.id
+     ?`<button class="secondary" onclick="deleteProduct('${esc(p.id)}')">Delete</button>`
+     :`<button class="secondary" onclick="messageSeller('${esc(p.seller_id)}')">Message seller</button>`}
+   </div>
+  </div>
+ `).join("");
+
+ $("productList").innerHTML=html;
+
+ $("featuredProducts").innerHTML=data.slice(0,3).map(p=>`
+  <p>${esc(p.name)} — <span class="price">₦${Number(p.price).toLocaleString("en-NG")}</span></p>
+ `).join("");
 }
+
 async function deleteProduct(id){
  if(!confirm("Delete this product?"))return;
- const {error}=await db.from("jehu_products").delete().eq("id",id).eq("seller_id",user.id);
- if(error)alert(error.message);else loadProducts();
-}
-async function messageSeller(id){go("chats");$("peerId").value=id;await openChat();}
-function playVideo(){
- let url;try{url=new URL($("videoUrl").value.trim());}catch{$("videoArea").textContent="Enter a valid video URL.";return;}
- if(!["https:","http:"].includes(url.protocol))return;
- const v=document.createElement("video");v.controls=true;v.playsInline=true;v.style.width="100%";v.style.marginTop="15px";v.src=url.href;
- v.onerror=()=>{$("videoArea").textContent="This link could not be played. Use a direct video file URL.";};$("videoArea").replaceChildren(v);
+
+ const {error}=await db.from("jehu_products")
+ .delete().eq("id",id).eq("seller_id",user.id);
+
+ if(error)alert(error.message);
+ else loadProducts();
 }
 
-/* VOICE AND VIDEO CALLS */
-let callChannel=null,callChannelTopic=null,callChannelPromise=null;
-let rtcPeer=null,localCallStream=null,remoteCallStream=null;
-let callId=null,incomingOffer=null,queuedCallCandidates=[],earlyCallCandidates=[];
-let callMuted=false,cameraOff=false,callMode="video";
+async function messageSeller(id){
+ go("chats");
+ $("peerId").value=id;
+ await openChat();
+}
+
+function playVideo(){
+ const raw=$("videoUrl").value.trim();
+ let url;
+
+ try{
+  url=new URL(raw);
+ }catch{
+  $("videoArea").textContent="Enter a valid video URL.";
+  return;
+ }
+
+ if(!["https:","http:"].includes(url.protocol))return;
+
+ const v=document.createElement("video");
+ v.controls=true;
+ v.playsInline=true;
+ v.style.width="100%";
+ v.style.marginTop="15px";
+ v.src=url.href;
+
+ v.onerror=()=>{
+  $("videoArea").textContent="This link could not be played. Use a direct video file URL.";
+ };
+
+ $("videoArea").replaceChildren(v);
+}
+
+// ---------------- JehuApp one-to-one video calling ----------------
+
+let callChannel=null;
+let callChannelTopic=null;
+let callChannelPromise=null;
+let rtcPeer=null;
+let localCallStream=null;
+let remoteCallStream=null;
+let callId=null;
+let incomingOffer=null;
+let queuedCallCandidates=[];
+let earlyCallCandidates=[];
+let callMuted=false;
+let cameraOff=false;
 
 function callTopicForCurrentChat(){
- if(!user||!peer)throw Error("Open a conversation first.");
- return"jehu-call:"+[user.id,peer.id].sort().join(":");
+ if(!user||!peer)throw new Error("Open a conversation first.");
+ return "jehu-call:"+[user.id,peer.id].sort().join(":");
 }
+
 async function connectCallChannel(){
  const topic=callTopicForCurrentChat();
+
  if(callChannel&&callChannelTopic===topic)return callChannel;
  if(callChannelPromise)await callChannelPromise;
- if(callChannel&&callChannelTopic!==topic){await db.removeChannel(callChannel);callChannel=null;callChannelTopic=null;}
+
+ if(callChannel&&callChannelTopic!==topic){
+  await db.removeChannel(callChannel);
+  callChannel=null;
+  callChannelTopic=null;
+ }
+
+ if(callChannel&&callChannelTopic===topic)return callChannel;
+
  callChannelPromise=(async()=>{
   const channel=db.channel(topic,{config:{private:true}});
+
   channel.on("broadcast",{event:"call-signal"},({payload})=>{
-   handleCallSignal(payload).catch(err=>{console.error(err);setCallStatus("Call problem: "+err.message);});
-  });
-  await new Promise((resolve,reject)=>{
-   let settled=false;const timer=setTimeout(()=>{if(!settled){settled=true;reject(Error("Timed out connecting to call service."));}},15000);
-   channel.subscribe((status,error)=>{
-    if(status==="SUBSCRIBED"&&!settled){settled=true;clearTimeout(timer);resolve();}
-    else if(["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(status)&&!settled){settled=true;clearTimeout(timer);reject(error||Error("Call channel failed. Check Supabase Realtime settings."));}
+   handleCallSignal(payload).catch(err=>{
+    console.error("Video-call signal error:",err);
+    setCallStatus("Call connection problem: "+err.message);
    });
   });
-  callChannel=channel;callChannelTopic=topic;return channel;
+
+  await new Promise((resolve,reject)=>{
+   let settled=false;
+
+   const timeout=setTimeout(()=>{
+    if(!settled){
+     settled=true;
+     reject(new Error("Timed out connecting to JehuApp call service."));
+    }
+   },15000);
+
+   channel.subscribe((status,error)=>{
+    if(status==="SUBSCRIBED"&&!settled){
+     settled=true;
+     clearTimeout(timeout);
+     resolve();
+    }else if(["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(status)&&!settled){
+     settled=true;
+     clearTimeout(timeout);
+     reject(error||new Error("Could not connect to the private call channel. Check Supabase Realtime policies."));
+    }
+   });
+  });
+
+  callChannel=channel;
+  callChannelTopic=topic;
+  return channel;
  })();
- try{return await callChannelPromise;}finally{callChannelPromise=null;}
+
+ try{
+  return await callChannelPromise;
+ }finally{
+  callChannelPromise=null;
+ }
 }
+
 async function sendCallSignal(type,extra={}){
- await connectCallChannel();if(!callId)throw Error("The call session has ended.");
- const result=await callChannel.send({type:"broadcast",event:"call-signal",payload:{type,from:user.id,to:peer.id,callId,...extra}});
- if(result!=="ok")throw Error("Call signal could not be sent.");
+ await connectCallChannel();
+
+ if(!callId)throw new Error("The call session has ended.");
+
+ const result=await callChannel.send({
+  type:"broadcast",
+  event:"call-signal",
+  payload:{
+   type,
+   from:user.id,
+   to:peer.id,
+   callId,
+   ...extra
+  }
+ });
+
+ if(result!=="ok")throw new Error("The call signal could not be sent.");
 }
-function setCallStatus(msg){$("callStatusText").textContent=msg;}
-function showCall(){$("videoCallModal").classList.remove("hidden");}
-function hideCall(){$("videoCallModal").classList.add("hidden");}
-function showIncomingControls(){$("incomingCallButtons").classList.remove("hidden");$("activeCallButtons").classList.add("hidden");}
-function showActiveCallControls(){$("incomingCallButtons").classList.add("hidden");$("activeCallButtons").classList.remove("hidden");}
+
+function setCallStatus(message){
+ $("callStatusText").textContent=message;
+}
+
+function showCall(){
+ $("videoCallModal").classList.remove("hidden");
+}
+
+function hideCall(){
+ $("videoCallModal").classList.add("hidden");
+}
+
+function showIncomingControls(){
+ $("incomingCallButtons").classList.remove("hidden");
+ $("activeCallButtons").classList.add("hidden");
+}
+
+function showActiveCallControls(){
+ $("incomingCallButtons").classList.add("hidden");
+ $("activeCallButtons").classList.remove("hidden");
+}
 
 async function createCallPeer(){
- if(!navigator.mediaDevices?.getUserMedia)throw Error("Camera and microphone need HTTPS and a supported browser.");
- const videoOptions=callMode==="video"?{facingMode:"user",width:{ideal:1280},height:{ideal:720}}:false;
- localCallStream=await navigator.mediaDevices.getUserMedia({audio:true,video:videoOptions});
+ if(!navigator.mediaDevices?.getUserMedia){
+  throw new Error("Camera and microphone access needs HTTPS and a supported browser.");
+ }
+
+ localCallStream=await navigator.mediaDevices.getUserMedia({
+  audio:true,
+  video:{
+   facingMode:"user",
+   width:{ideal:1280},
+   height:{ideal:720}
+  }
+ });
+
  $("localCallVideo").srcObject=localCallStream;
- $("localCallVideo").play().catch(()=>{});
- remoteCallStream=new MediaStream();$("remoteCallVideo").srcObject=remoteCallStream;
- document.querySelectorAll(".call-video-tile").forEach(el=>el.classList.toggle("hidden",callMode==="voice"));
- rtcPeer=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
- localCallStream.getTracks().forEach(track=>rtcPeer.addTrack(track,localCallStream));
+
+ remoteCallStream=new MediaStream();
+ $("remoteCallVideo").srcObject=remoteCallStream;
+
+ rtcPeer=new RTCPeerConnection({
+  iceServers:[
+   {urls:"stun:stun.l.google.com:19302"}
+  ]
+ });
+
+ localCallStream.getTracks().forEach(track=>{
+  rtcPeer.addTrack(track,localCallStream);
+ });
+
  rtcPeer.ontrack=event=>{
-  if(event.streams?.[0])$("remoteCallVideo").srcObject=event.streams[0];
-  else{remoteCallStream.addTrack(event.track);$("remoteCallVideo").srcObject=remoteCallStream;}
+  if(event.streams&&event.streams[0]){
+   $("remoteCallVideo").srcObject=event.streams[0];
+  }else{
+   remoteCallStream.addTrack(event.track);
+   $("remoteCallVideo").srcObject=remoteCallStream;
+  }
+
   $("remoteCallVideo").play().catch(()=>{});
  };
+
  rtcPeer.onicecandidate=event=>{
-  if(event.candidate&&callId)sendCallSignal("candidate",{candidate:event.candidate.toJSON()}).catch(console.warn);
+  if(event.candidate&&callId){
+   sendCallSignal("candidate",{
+    candidate:event.candidate.toJSON()
+   }).catch(err=>console.warn(err));
+  }
  };
+
  rtcPeer.onconnectionstatechange=()=>{
-  if(!rtcPeer)return;const s=rtcPeer.connectionState;
-  if(s==="connected")setCallStatus(callMode==="voice"?"Voice call connected.":"Video call connected.");
-  else if(s==="connecting")setCallStatus("Connecting...");
-  else if(s==="disconnected")setCallStatus("Connection interrupted. Reconnecting...");
-  else if(s==="failed")setCallStatus("Connection failed. Try again.");
+  if(!rtcPeer)return;
+
+  const state=rtcPeer.connectionState;
+
+  if(state==="connected"){
+   setCallStatus("Connected — you are now on a video call.");
+  }else if(state==="connecting"){
+   setCallStatus("Connecting video and audio...");
+  }else if(state==="disconnected"){
+   setCallStatus("Connection interrupted. Trying to reconnect...");
+  }else if(state==="failed"){
+   setCallStatus("Connection failed. End the call and try again.");
+  }
  };
+
  return rtcPeer;
-}
+ }
+
 async function flushCallCandidates(){
  if(!rtcPeer||!rtcPeer.remoteDescription)return;
- const pending=queuedCallCandidates;queuedCallCandidates=[];
- for(const c of pending){try{await rtcPeer.addIceCandidate(new RTCIceCandidate(c));}catch(e){console.warn(e);}}
+
+ const pending=queuedCallCandidates;
+ queuedCallCandidates=[];
+
+ for(const candidate of pending){
+  try{
+   await rtcPeer.addIceCandidate(new RTCIceCandidate(candidate));
+  }catch(err){
+   console.warn("Could not add ICE candidate:",err);
+  }
+ }
 }
-async function startCall(kind){
- if(!peer)return alert("Open the person's chat first.");
- if(callId)return alert("A call is already waiting or active.");
- callMode=kind;
+
+async function startVideoCall(){
+ if(!peer)return alert("Open the person's chat before starting a video call.");
+ if(callId)return alert("A video call is already waiting or active.");
+
  try{
   await connectCallChannel();
-  callId=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2);
-  incomingOffer=null;queuedCallCandidates=[];earlyCallCandidates=[];
-  $("callHeading").textContent=(kind==="voice"?"Calling ":"Video calling ")+peer.name;
-  $("remoteCallLabel").textContent=peer.name;showCall();showActiveCallControls();
-  setCallStatus("Requesting "+(kind==="voice"?"microphone":"camera and microphone")+" permission...");
+
+  callId=(crypto.randomUUID
+   ?crypto.randomUUID()
+   :String(Date.now())+Math.random().toString(16).slice(2));
+
+  incomingOffer=null;
+  queuedCallCandidates=[];
+  earlyCallCandidates=[];
+
+  $("callHeading").textContent="Calling "+peer.name;
+  $("remoteCallLabel").textContent=peer.name;
+
+  showCall();
+  showActiveCallControls();
+
+  setCallStatus("Requesting camera and microphone permission...");
+
   await createCallPeer();
-  const offer=await rtcPeer.createOffer();await rtcPeer.setLocalDescription(offer);
-  await sendCallSignal("offer",{description:{type:rtcPeer.localDescription.type,sdp:rtcPeer.localDescription.sdp},mediaType:kind});
+
+  const offer=await rtcPeer.createOffer();
+  await rtcPeer.setLocalDescription(offer);
+
+  const description={
+   type:rtcPeer.localDescription.type,
+   sdp:rtcPeer.localDescription.sdp
+  };
+
+  await sendCallSignal("offer",{description});
+
   setCallStatus("Calling "+peer.name+". Waiting for answer...");
- }catch(err){alert("Could not start the call: "+err.message);await closeVideoCall();}
+
+ }catch(err){
+  alert("Could not start the video call: "+err.message);
+  await closeVideoCall();
+ }
 }
-function startVideoCall(){return startCall("video");}
-function startVoiceCall(){return startCall("voice");}
 
 async function handleCallSignal(data){
  if(!data||data.to!==user?.id||data.from!==peer?.id)return;
- if(data.type==="candidate"&&!callId){earlyCallCandidates.push({callId:data.callId,candidate:data.candidate});return;}
- if(data.type==="offer"){
-  if(callId&&callId!==data.callId){
-   try{await callChannel.send({type:"broadcast",event:"call-signal",payload:{type:"busy",from:user.id,to:data.from,callId:data.callId}});}catch(e){}
-   return;
-  }
-  if(rtcPeer||incomingOffer)return;
-  callId=data.callId;incomingOffer=data.description;
-  callMode=data.mediaType==="voice"?"voice":"video";
-  queuedCallCandidates=earlyCallCandidates.filter(x=>x.callId===callId).map(x=>x.candidate);earlyCallCandidates=[];
-  $("callHeading").textContent="Incoming "+(callMode==="voice"?"voice":"video")+" call";
-  $("remoteCallLabel").textContent=peer.name;
-  document.querySelectorAll(".call-video-tile").forEach(el=>el.classList.toggle("hidden",callMode==="voice"));
-  showCall();showIncomingControls();setCallStatus(peer.name+" is calling you.");
-  $("acceptCallButton").textContent=callMode==="voice"?"📞 Accept voice call":"📹 Accept video call";
+
+ if(data.type==="candidate"&&!callId){
+  earlyCallCandidates.push({
+   callId:data.callId,
+   candidate:data.candidate
+  });
   return;
  }
+
+ if(data.type==="offer"){
+  if(callId&&callId!==data.callId){
+   const saved=callId;
+
+   try{
+    await callChannel.send({
+     type:"broadcast",
+     event:"call-signal",
+     payload:{
+      type:"busy",
+      from:user.id,
+      to:data.from,
+      callId:data.callId
+     }
+    });
+   }catch(err){
+    console.warn(err);
+   }
+
+   callId=saved;
+   return;
+  }
+
+  if(rtcPeer||incomingOffer)return;
+
+  callId=data.callId;
+  incomingOffer=data.description;
+
+  queuedCallCandidates=earlyCallCandidates
+   .filter(item=>item.callId===callId)
+   .map(item=>item.candidate);
+
+  earlyCallCandidates=[];
+
+  $("callHeading").textContent="Incoming video call";
+  $("remoteCallLabel").textContent=peer.name;
+
+  showCall();
+  showIncomingControls();
+
+  setCallStatus(peer.name+" is calling you.");
+  return;
+ }
+
  if(data.callId!==callId)return;
+
  if(data.type==="answer"){
   if(!rtcPeer)return;
-  await rtcPeer.setRemoteDescription(new RTCSessionDescription(data.description));await flushCallCandidates();
-  setCallStatus("Answered. Connecting...");
+
+  await rtcPeer.setRemoteDescription(
+   new RTCSessionDescription(data.description)
+  );
+
+  await flushCallCandidates();
+
+  setCallStatus("The other person answered. Connecting...");
+
  }else if(data.type==="candidate"){
-  if(rtcPeer?.remoteDescription){try{await rtcPeer.addIceCandidate(new RTCIceCandidate(data.candidate));}catch(e){console.warn(e);}}
-  else queuedCallCandidates.push(data.candidate);
- }else if(data.type==="reject"){setCallStatus("The other person declined.");await closeVideoCall();}
- else if(data.type==="busy"){setCallStatus("The other person is busy.");await closeVideoCall();}
- else if(data.type==="end"){setCallStatus("The other person ended the call.");await closeVideoCall();}
+
+  if(rtcPeer?.remoteDescription){
+   try{
+    await rtcPeer.addIceCandidate(
+     new RTCIceCandidate(data.candidate)
+    );
+   }catch(err){
+    console.warn("Could not add remote ICE candidate:",err);
+   }
+  }else{
+   queuedCallCandidates.push(data.candidate);
+  }
+
+ }else if(data.type==="reject"){
+
+  setCallStatus("The other person declined the call.");
+  await closeVideoCall();
+
+ }else if(data.type==="busy"){
+
+  setCallStatus("The other person is already on another call.");
+  await closeVideoCall();
+
+ }else if(data.type==="end"){
+
+  setCallStatus("The other person ended the call.");
+  await closeVideoCall();
+ }
 }
+
 async function acceptIncomingCall(){
  if(!incomingOffer||!callId)return;
+
  try{
-  setCallStatus("Opening "+(callMode==="voice"?"microphone":"camera and microphone")+"...");
-  await createCallPeer();await rtcPeer.setRemoteDescription(new RTCSessionDescription(incomingOffer));await flushCallCandidates();
-  const answer=await rtcPeer.createAnswer();await rtcPeer.setLocalDescription(answer);
-  await sendCallSignal("answer",{description:{type:rtcPeer.localDescription.type,sdp:rtcPeer.localDescription.sdp}});
-  showActiveCallControls();setCallStatus("Connecting "+callMode+" call...");
- }catch(err){alert("Could not accept the call: "+err.message);await closeVideoCall();}
+  setCallStatus("Opening your camera and microphone...");
+
+  await createCallPeer();
+
+  await rtcPeer.setRemoteDescription(
+   new RTCSessionDescription(incomingOffer)
+  );
+
+  await flushCallCandidates();
+
+  const answer=await rtcPeer.createAnswer();
+  await rtcPeer.setLocalDescription(answer);
+
+  await sendCallSignal("answer",{
+   description:{
+    type:rtcPeer.localDescription.type,
+    sdp:rtcPeer.localDescription.sdp
+   }
+  });
+
+  showActiveCallControls();
+
+  setCallStatus("Answer sent. Connecting video and audio...");
+
+ }catch(err){
+  alert("Could not accept the video call: "+err.message);
+  await closeVideoCall();
+ }
 }
-async function declineIncomingCall(){if(callId){try{await sendCallSignal("reject");}catch(e){}}await closeVideoCall();}
-async function endVideoCall(){if(callId){try{await sendCallSignal("end");}catch(e){}}await closeVideoCall();}
+
+async function declineIncomingCall(){
+ if(callId){
+  try{
+   await sendCallSignal("reject");
+  }catch(err){
+   console.warn(err);
+  }
+ }
+
+ await closeVideoCall();
+}
+
+async function endVideoCall(){
+ if(callId){
+  try{
+   await sendCallSignal("end");
+  }catch(err){
+   console.warn(err);
+  }
+ }
+
+ await closeVideoCall();
+}
+
 async function closeVideoCall(){
- if(rtcPeer){rtcPeer.ontrack=null;rtcPeer.onicecandidate=null;rtcPeer.onconnectionstatechange=null;rtcPeer.close();rtcPeer=null;}
- if(localCallStream){localCallStream.getTracks().forEach(t=>t.stop());localCallStream=null;}
- if(remoteCallStream){remoteCallStream.getTracks().forEach(t=>t.stop());remoteCallStream=null;}
- $("localCallVideo").srcObject=null;$("remoteCallVideo").srcObject=null;
- callId=null;incomingOffer=null;queuedCallCandidates=[];earlyCallCandidates=[];
- callMuted=false;cameraOff=false;callMode="video";
- $("muteCallButton").textContent="🎙️ Mute";$("cameraCallButton").textContent="📷 Camera off";
- $("incomingCallButtons").classList.add("hidden");$("activeCallButtons").classList.add("hidden");
- document.querySelectorAll(".call-video-tile").forEach(el=>el.classList.remove("hidden"));hideCall();
+ if(rtcPeer){
+  rtcPeer.ontrack=null;
+  rtcPeer.onicecandidate=null;
+  rtcPeer.onconnectionstatechange=null;
+  rtcPeer.close();
+  rtcPeer=null;
+ }
+
+ if(localCallStream){
+  localCallStream.getTracks().forEach(track=>track.stop());
+  localCallStream=null;
+ }
+
+ if(remoteCallStream){
+  remoteCallStream.getTracks().forEach(track=>track.stop());
+  remoteCallStream=null;
+ }
+
+ $("localCallVideo").srcObject=null;
+ $("remoteCallVideo").srcObject=null;
+
+ callId=null;
+ incomingOffer=null;
+ queuedCallCandidates=[];
+ earlyCallCandidates=[];
+
+ callMuted=false;
+ cameraOff=false;
+
+ $("muteCallButton").textContent="🎙️ Mute";
+ $("cameraCallButton").textContent="📷 Camera off";
+
+ $("incomingCallButtons").classList.add("hidden");
+ $("activeCallButtons").classList.add("hidden");
+
+ hideCall();
 }
+
 function toggleCallMute(button){
- if(!localCallStream)return;callMuted=!callMuted;
- localCallStream.getAudioTracks().forEach(t=>t.enabled=!callMuted);
+ if(!localCallStream)return;
+
+ callMuted=!callMuted;
+
+ localCallStream.getAudioTracks().forEach(track=>{
+  track.enabled=!callMuted;
+ });
+
  button.textContent=callMuted?"🔇 Unmute":"🎙️ Mute";
 }
+
 function toggleCallCamera(button){
- if(!localCallStream||callMode==="voice")return;
- cameraOff=!cameraOff;localCallStream.getVideoTracks().forEach(t=>t.enabled=!cameraOff);
+ if(!localCallStream)return;
+
+ cameraOff=!cameraOff;
+
+ localCallStream.getVideoTracks().forEach(track=>{
+  track.enabled=!cameraOff;
+ });
+
  button.textContent=cameraOff?"📷 Camera on":"📷 Camera off";
 }
 
-/* LOGIN SESSION RESTORE */
+// ---------------- End video calling ----------------
+
 async function init(){
  try{
-  const c=client();const {data,error}=await c.auth.getSession();if(error)throw error;
+  const c=client();
+  const {data,error}=await c.auth.getSession();
+
+  if(error)throw error;
+
   if(data.session?.user)savedUser=data.session.user;
+
   c.auth.onAuthStateChange((event,session)=>{
-   if(event==="SIGNED_OUT"){user=null;peer=null;$("app").classList.add("hidden");$("authScreen").classList.remove("hidden");}
+   if(event==="SIGNED_OUT"){
+    user=null;
+    peer=null;
+
+    $("app").classList.add("hidden");
+    $("authScreen").classList.add("hidden");
+    $("welcomeScreen").classList.remove("hidden");
+   }
   });
- }catch(e){$("authStatus").textContent=e.message;}
+
+ }catch(e){
+  $("authStatus").textContent=e.message;
+ }
 }
+
 init();
 
-/* INSTALL BUTTON: browser install prompt where supported; otherwise instructions */
-let deferredPrompt;
-const installButton=$("installJehu");
-window.addEventListener("beforeinstallprompt",event=>{
- event.preventDefault();deferredPrompt=event;installButton.disabled=false;
-});
-installButton.addEventListener("click",async()=>{
- if(deferredPrompt){
-  deferredPrompt.prompt();const result=await deferredPrompt.userChoice;
-  if(result.outcome==="accepted"){installButton.textContent="APP INSTALLED ✓";installButton.disabled=true;}
-  deferredPrompt=null;
- }else{
-  const apple=/iPhone|iPad|iPod/i.test(navigator.userAgent);
-  alert(apple
-   ?"On iPhone: open this website in Safari, tap Share, then choose Add to Home Screen."
-   :"In Chrome: open the three-dot menu and choose Install JehuApp or Add to Home Screen. If the option is missing, this one-file version may not meet all browser installation requirements.");
- }
-});
-window.addEventListener("appinstalled",()=>{installButton.textContent="APP INSTALLED ✓";installButton.disabled=true;});
-
-
-// JehuApp offline support
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/service-worker.js")
-      .then(registration => {
-        console.log("JehuApp offline support is ready!");
-      })
-      .catch(error => {
-        console.error("Service worker error:", error);
-      });
-  });
-}
-
-
 </script>
+
+<script>
+if("serviceWorker" in navigator){
+ window.addEventListener("load",()=>{
+  navigator.serviceWorker.register("/service-worker.js")
+   .catch(error=>console.error("Service worker registration failed:",error));
+ });
+}
+</script>
+
 </body>
 </html>
+</head>
+<body>

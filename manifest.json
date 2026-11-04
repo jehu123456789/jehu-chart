@@ -1,17 +1,14 @@
-
-
 {
   "id": "/",
   "name": "JehuApp",
   "short_name": "JehuApp",
-  "description": "Connect, Chat, Share and Discover",
+  "description": "Connect, Share and Discover",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#071a25",
-  "theme_color": "#071a25",
+  "background_color": "#101827",
+  "theme_color": "#101827",
   "icons": [
     {
       "src": "/icon-192.png",
