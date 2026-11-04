@@ -825,15 +825,32 @@ async function imageUrl(path){
  if(error)throw error;
  return data.signedUrl;
 }
+
+
+
+
 async function uploadMedia(file){
  if(!file)throw Error("Choose a file first.");
- if(file.size>25*1024*1024)throw Error("Please choose a file smaller than 25 MB.");
+
+ if(file.size>50*1024*1024)
+ throw Error("Please choose a file smaller than 50 MB.");
+
  const safeName=(file.name||"media").replace(/[^a-zA-Z0-9._-]/g,"_");
  const path=pairPath(user.id,peer.id)+"/"+user.id+"-"+Date.now()+"-"+safeName;
- const {error}=await db.storage.from(IMAGE_BUCKET).upload(path,file,{contentType:file.type||"application/octet-stream",upsert:false});
+
+ const {error}=await db.storage.from(IMAGE_BUCKET).upload(path,file,{
+  contentType:file.type||"application/octet-stream",
+  upsert:false
+ });
+
  if(error)throw error;
  return path;
 }
+
+
+
+
+
 
 function chooseMedia(kind,file){
  if(!file)return;
