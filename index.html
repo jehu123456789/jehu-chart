@@ -808,11 +808,31 @@ function time(v){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 async function loadPosts(){
  if(!user)return;
 
- for(const id of ["homeFeed","updatesFeed"])
-  $(id).innerHTML='<div class="empty">Loading...</div>';
+ const homeFeed=$("homeFeed");
+ const updatesFeed=$("updatesFeed");
+ const feeds=[homeFeed,updatesFeed].filter(Boolean);
+
+ if(!feeds.length)return;
+
+ feeds.forEach(feed=>{
+  feed.innerHTML='<div class="empty">Loading...</div>';
+ });
 
  const {data,error}=await db.from("jehu_posts")
   .select("id,author_id,content,created_at")
@@ -820,18 +840,19 @@ async function loadPosts(){
   .limit(50);
 
  if(error){
-  for(const id of ["homeFeed","updatesFeed"])
-   $(id).textContent=error.message;
+  feeds.forEach(feed=>feed.textContent=error.message);
   return;
  }
 
- if(!data.length){
-  for(const id of ["homeFeed","updatesFeed"])
-   $(id).innerHTML='<div class="empty">No posts yet.</div>';
+ if(!data || !data.length){
+  feeds.forEach(feed=>{
+   feed.innerHTML='<div class="empty">No posts yet.</div>';
+  });
   return;
  }
 
  const ids=[...new Set(data.map(p=>p.author_id))];
+
  const {data:profiles}=await db.from("jehu_profiles")
   .select("id,display_name").in("id",ids);
 
@@ -839,22 +860,28 @@ async function loadPosts(){
 
  for(const p of data){
   const name=p.author_id===user.id
-   ?$("displayName").value
+   ?($("displayName")?.value||"You")
    :((profiles||[]).find(x=>x.id===p.author_id)?.display_name||"JehuApp member");
 
-  let raw=String(p.content||""),mediaHtml="",caption=raw;
+  let raw=String(p.content||"");
+  let mediaHtml="";
+  let caption=raw;
+
   const match=raw.match(/^JEHU_MEDIA:(IMG|VIDEO):([^\n]+)\n([\s\S]*)$/);
 
   if(match){
-   const kind=match[1],path=match[2];
+   const kind=match[1];
+   const path=match[2];
    caption=match[3]||"";
 
    try{
     const url=await imageUrl(path);
+
     mediaHtml=kind==="IMG"
      ?`<img class="feed-media" src="${esc(url)}" alt="Community picture">`
      :`<video class="feed-media" controls playsinline preload="metadata"><source src="${esc(url)}"></video>`;
-   }catch{
+   }catch(err){
+    console.error("JehuApp media error:",err);
     mediaHtml='<p class="muted">Media could not be loaded.</p>';
    }
   }
@@ -865,26 +892,16 @@ async function loadPosts(){
     <div class="muted">${esc(time(p.created_at))}</div>
     ${caption?`<p>${esc(caption)}</p>`:""}
     ${mediaHtml}
-    ${p.author_id===user.id?`<button class="secondary" onclick="deletePost('${esc(p.id)}')">Delete</button>`:""}
+    ${p.author_id===user.id
+     ?`<button class="secondary" onclick="deletePost('${esc(p.id)}')">Delete</button>`
+     :""}
    </article>
   `);
  }
 
- $("homeFeed").innerHTML=cards.join("");
- $("updatesFeed").innerHTML=cards.join("");
+ if(homeFeed)homeFeed.innerHTML=cards.join("");
+ if(updatesFeed)updatesFeed.innerHTML=cards.join("");
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1355,8 +1372,20 @@ async function copyId(){
 
 
 
+
+
+
+
+
+
+
 $("productForm").addEventListener("submit",async e=>{
  e.preventDefault();
+
+ if(!user){
+  note("marketStatus","Please log in first.",true);
+  return;
+ }
 
  const button=e.submitter;
  if(button)button.disabled=true;
@@ -1368,6 +1397,14 @@ $("productForm").addEventListener("submit",async e=>{
   let mediaPath=null,mediaType=null;
 
   if(file){
+   if(!file.type.startsWith("image/")&&!file.type.startsWith("video/")){
+    throw new Error("Please select a picture or video.");
+   }
+
+   if(file.size>50*1024*1024){
+    throw new Error("Please choose a file smaller than 50 MB.");
+   }
+
    mediaPath=await uploadCommunityMedia(file,"products");
    mediaType=file.type.startsWith("video/")?"VIDEO":"IMG";
   }
@@ -1385,16 +1422,37 @@ $("productForm").addEventListener("submit",async e=>{
   if(error)throw error;
 
   $("productForm").reset();
-  $("productMediaPreview").replaceChildren();
+
+  if($("productMediaPreview")){
+   $("productMediaPreview").replaceChildren();
+  }
+
   note("marketStatus","Product listed successfully.");
   await loadProducts();
 
  }catch(err){
+  console.error("Marketplace upload error:",err);
   note("marketStatus",err.message,true);
  }finally{
   if(button)button.disabled=false;
  }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function loadProducts(){
  if(!user)return;
@@ -1455,62 +1513,6 @@ async function loadProducts(){
 
 
 
-
-async function loadProducts(){
- if(!user)return;
- const {data,error}=await db.from("jehu_products")
-  .select("id,seller_id,name,description,price,category,created_at")
-  .order("created_at",{ascending:false}).limit(50);
- if(error){
-  $("productList").textContent=error.message;
-  return;
- }
- if(!data.length){
-  $("productList").innerHTML='<div class="empty">No products listed yet.</div>';
-  $("featuredProducts").textContent="No products yet.";
-  return;
- }
- const html=data.map(p=>`
-  <div class="card product">
-   <div style="font-size:28px">▣</div>
-   <div class="info">
-    <b>${esc(p.name)}</b>
-    <p class="muted">${esc(p.category||"Other")} · ${esc(p.description||"")}</p>
-    <p class="price">₦${Number(p.price).toLocaleString("en-NG")}</p>
-    ${p.seller_id===user.id
-      ?`<button class="secondary" onclick="deleteProduct('${esc(p.id)}')">Delete</button>`
-      :`<button class="secondary" onclick="messageSeller('${esc(p.seller_id)}')">Message seller</button>`}
-   </div>
-  </div>`).join("");
- $("productList").innerHTML=html;
- $("featuredProducts").innerHTML=data.slice(0,3).map(p=>`<p>${esc(p.name)} — <span class="price">₦${Number(p.price).toLocaleString("en-NG")}</span></p>`).join("");
-}
-
-async function deleteProduct(id){
- if(!confirm("Delete this product?"))return;
- const {error}=await db.from("jehu_products").delete().eq("id",id).eq("seller_id",user.id);
- if(error)alert(error.message);
- else loadProducts();
-}
-async function messageSeller(id){
- go("chats");
- $("peerId").value=id;
- await openChat();
-}
-function playVideo(){
- const raw=$("videoUrl").value.trim();
- let url;
- try{url=new URL(raw);}catch{$("videoArea").textContent="Enter a valid video URL.";return;}
- if(!["https:","http:"].includes(url.protocol))return;
- const v=document.createElement("video");
- v.controls=true;
- v.playsInline=true;
- v.style.width="100%";
- v.style.marginTop="15px";
- v.src=url.href;
- v.onerror=()=>{$("videoArea").textContent="This link could not be played. Use a direct video file URL.";};
- $("videoArea").replaceChildren(v);
-}
 
 
 
