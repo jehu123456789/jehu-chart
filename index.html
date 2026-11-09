@@ -1301,15 +1301,46 @@ function messagePreview(body){
  return value;
 }
 
+
+
 function renderContacts(){
  const search=($("contactSearch")?.value||"").toLowerCase();
- const filtered=contacts.filter(c=>c.name.toLowerCase().includes(search));
- $("contactList").innerHTML=filtered.length?filtered.map(c=>`
-  <button class="contact ${peer?.id===c.id?"active":""}" onclick="selectContact('${esc(c.id)}')">
-   <div class="avatar">${esc(initials(c.name))}</div>
-   <div class="contact-info"><strong>${esc(c.name)}</strong><small>${esc(messagePreview(c.last))}</small></div>
-  </button>`).join(""):'<div class="empty">No matching chats.</div>';
+
+ const filtered=contacts.filter(c=>
+  String(c.name||"").toLowerCase().includes(search)
+ );
+
+ $("contactList").innerHTML=filtered.length
+  ?filtered.map(c=>`
+   <button type="button"
+    class="contact ${peer?.id===c.id?"active":""}"
+    data-contact-id="${esc(c.id)}">
+
+    <div class="avatar">${esc(initials(c.name))}</div>
+
+    <div class="contact-info">
+     <strong>${esc(c.name)}</strong>
+     <small>${esc(messagePreview(c.last))}</small>
+    </div>
+   </button>
+  `).join("")
+  :'<div class="empty">No matching chats.</div>';
+
+ // Make every contact clickable
+ $("contactList").querySelectorAll("[data-contact-id]").forEach(button=>{
+  button.addEventListener("click",async()=>{
+   const id=button.dataset.contactId;
+   console.log("Contact clicked:",id);
+
+   await selectContact(id);
+  });
+ });
 }
+
+
+
+
+
 
 function pairPath(a,b){
  return [a,b].sort().join("/");
