@@ -1064,34 +1064,111 @@ async function selectContact(id){
  await openChat();
 }
 
+
+
+
+
+
+
 async function loadRecentChats(){
  if(!user)return;
- const {data,error}=await db.from("jehu_messages")
-  .select("sender_id,recipient_id,body,created_at")
-  .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-  .order("created_at",{ascending:false}).limit(200);
- if(error){
-  $("contactList").textContent="Unable to load chats: "+error.message;
-  return;
+
+ let data=[];
+ let profiles=[];
+ let offline=false;
+
+ // Try loading recent chats from Supabase
+ try{
+  const {data:onlineData,error}=await db.from("jehu_messages")
+   .select("id,sender_id,recipient_id,body,created_at")
+   .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+   .order("created_at",{ascending:false})
+   .limit(200);
+
+  if(error)throw error;
+
+  data=onlineData||[];
+
+  // Save messages for offline use
+  const saved=data.map(m=>({
+   ...m,
+   ownerId:user.id
+  }));
+
+  await saveOfflineMessages(saved);
+
+  const ids=[...new Set(
+   data.map(m=>m.sender_id===user.id?m.recipient_id:m.sender_id)
+  )];
+
+  if(ids.length){
+   const result=await db.from("jehu_profiles")
+    .select("id,display_name")
+    .in("id",ids);
+
+   if(result.error)throw result.error;
+
+   profiles=result.data||[];
+  }
+
+ }catch(error){
+  console.log("Loading saved chats offline:",error);
+  offline=true;
+
+  const saved=await getOfflineMessages();
+
+  data=saved.filter(m=>m.ownerId===user.id);
+
+  data.sort((a,b)=>
+   new Date(b.created_at)-new Date(a.created_at)
+  );
  }
- const ids=[...new Set((data||[]).map(m=>m.sender_id===user.id?m.recipient_id:m.sender_id))];
+
+ const ids=[...new Set(
+  data.map(m=>
+   m.sender_id===user.id?m.recipient_id:m.sender_id
+  )
+ )];
+
  if(!ids.length){
   contacts=[];
-  $("contactList").innerHTML='<div class="empty">No chats yet. Start a new chat.</div>';
+  $("contactList").innerHTML=offline
+   ?'<div class="empty">No saved chats on this device.</div>'
+   :'<div class="empty">No chats yet. Start a new chat.</div>';
   return;
  }
- const {data:profiles,error:pe}=await db.from("jehu_profiles").select("id,display_name").in("id",ids);
- if(pe){
-  $("contactList").textContent="Unable to load contact names.";
-  return;
- }
+
  contacts=ids.map(id=>{
-  const p=(profiles||[]).find(x=>x.id===id);
-  const m=data.find(x=>x.sender_id===id||x.recipient_id===id);
-  return{id,name:p?.display_name||"JehuApp member",last:m?.body||"",date:m?.created_at};
+  const m=data.find(x=>
+   x.sender_id===id||x.recipient_id===id
+  );
+
+  const profile=profiles.find(x=>x.id===id);
+
+  return {
+   id,
+   name:profile?.display_name||"JehuApp member",
+   last:m?.body||"",
+   date:m?.created_at
+  };
  });
+
  renderContacts();
+
+ if(offline){
+  $("contactList").insertAdjacentHTML(
+   "afterbegin",
+   '<div class="empty">Offline mode — showing saved conversations.</div>'
+  );
+ }
 }
+
+
+
+
+
+
+
 
 function messagePreview(body){
  let value=String(body||"").replace(/^STYLE:#[0-9a-fA-F]{6}\n/,"");
