@@ -1654,7 +1654,7 @@ console.log("SELECTED PERSON:",peer.id);
   // Only show messages belonging to this account
   // and this particular conversation
   data=saved.filter(message=>
-   message.ownerId===user.id&&
+   
    (
     (message.sender_id===user.id&&
      message.recipient_id===peer.id)||
