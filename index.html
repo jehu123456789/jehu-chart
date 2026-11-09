@@ -821,6 +821,9 @@ function time(v){
 
 
 
+
+
+
 async function loadPosts(){
  if(!user)return;
 
@@ -834,55 +837,99 @@ async function loadPosts(){
   feed.innerHTML='<div class="empty">Loading...</div>';
  });
 
- const {data,error}=await db.from("jehu_posts")
-  .select("id,author_id,content,created_at")
-  .order("created_at",{ascending:false})
-  .limit(50);
+ let data=[];
+ let profiles=[];
+ let offline=false;
 
- if(error){
-  feeds.forEach(feed=>feed.textContent=error.message);
-  return;
+ try{
+  const result=await db.from("jehu_posts")
+   .select("id,author_id,content,created_at")
+   .order("created_at",{ascending:false})
+   .limit(50);
+
+  if(result.error)throw result.error;
+
+  data=result.data||[];
+
+  if(data.length){
+   const ids=[...new Set(data.map(p=>p.author_id))];
+
+   const profileResult=await db.from("jehu_profiles")
+    .select("id,display_name")
+    .in("id",ids);
+
+   if(profileResult.error)throw profileResult.error;
+
+   profiles=profileResult.data||[];
+  }
+
+  const savedPosts=data.map(p=>({
+   ...p,
+   cachedAuthorName:
+    profiles.find(x=>x.id===p.author_id)?.display_name||
+    (p.author_id===user.id?"You":"JehuApp member")
+  }));
+
+  await saveOfflinePosts(savedPosts);
+
+ }catch(error){
+  console.log("Loading saved offline posts:",error);
+  offline=true;
+
+  data=await getOfflinePosts();
+
+  data.sort((a,b)=>
+   new Date(b.created_at)-new Date(a.created_at)
+  );
  }
 
- if(!data || !data.length){
+ if(!data.length){
   feeds.forEach(feed=>{
-   feed.innerHTML='<div class="empty">No posts yet.</div>';
+   feed.innerHTML=offline
+    ?'<div class="empty">No saved Community Updates on this device.</div>'
+    :'<div class="empty">No posts yet.</div>';
   });
   return;
  }
 
- const ids=[...new Set(data.map(p=>p.author_id))];
-
- const {data:profiles}=await db.from("jehu_profiles")
-  .select("id,display_name").in("id",ids);
-
  const cards=[];
 
  for(const p of data){
-  const name=p.author_id===user.id
-   ?($("displayName")?.value||"You")
-   :((profiles||[]).find(x=>x.id===p.author_id)?.display_name||"JehuApp member");
+  const name=offline
+   ?(p.cachedAuthorName||"JehuApp member")
+   :(
+     p.author_id===user.id
+      ?($("displayName")?.value||"You")
+      :(profiles.find(x=>x.id===p.author_id)?.display_name||"JehuApp member")
+    );
 
   let raw=String(p.content||"");
   let mediaHtml="";
   let caption=raw;
 
-  const match=raw.match(/^JEHU_MEDIA:(IMG|VIDEO):([^\n]+)\n([\s\S]*)$/);
+  const match=raw.match(
+   /^JEHU_MEDIA:(IMG|VIDEO):([^\n]+)\n([\s\S]*)$/
+  );
 
   if(match){
    const kind=match[1];
    const path=match[2];
    caption=match[3]||"";
 
-   try{
-    const url=await imageUrl(path);
+   if(offline){
+    mediaHtml='<p class="muted">Picture or video needs internet to load.</p>';
+   }else{
+    try{
+     const url=await imageUrl(path);
 
-    mediaHtml=kind==="IMG"
-     ?`<img class="feed-media" src="${esc(url)}" alt="Community picture">`
-     :`<video class="feed-media" controls playsinline preload="metadata"><source src="${esc(url)}"></video>`;
-   }catch(err){
-    console.error("JehuApp media error:",err);
-    mediaHtml='<p class="muted">Media could not be loaded.</p>';
+     mediaHtml=kind==="IMG"
+      ?`<img class="feed-media" src="${esc(url)}" alt="Community picture">`
+      :`<video class="feed-media" controls playsinline preload="metadata"><source src="${esc(url)}"></video>`;
+
+    }catch(error){
+     console.error("Community media error:",error);
+     mediaHtml='<p class="muted">Media could not be loaded.</p>';
+    }
    }
   }
 
@@ -892,22 +939,20 @@ async function loadPosts(){
     <div class="muted">${esc(time(p.created_at))}</div>
     ${caption?`<p>${esc(caption)}</p>`:""}
     ${mediaHtml}
-    ${p.author_id===user.id
+    ${!offline&&p.author_id===user.id
      ?`<button class="secondary" onclick="deletePost('${esc(p.id)}')">Delete</button>`
      :""}
    </article>
   `);
  }
 
- if(homeFeed)homeFeed.innerHTML=cards.join("");
- if(updatesFeed)updatesFeed.innerHTML=cards.join("");
+ const offlineNotice=offline
+  ?'<div class="empty">Offline mode — showing saved Community Updates.</div>'
+  :"";
+
+ if(homeFeed)homeFeed.innerHTML=offlineNotice+cards.join("");
+ if(updatesFeed)updatesFeed.innerHTML=offlineNotice+cards.join("");
 }
-
-
-
-
-
-
 
 
 
@@ -1215,68 +1260,311 @@ async function toggleVoiceRecording(){
  }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+// JEHUAPP OFFLINE CHAT STORAGE
+let jehuOfflineDB;
+
+function openJehuOfflineDB(){
+ return new Promise((resolve,reject)=>{
+  if(jehuOfflineDB){
+   resolve(jehuOfflineDB);
+   return;
+  }
+
+  const request=indexedDB.open("JehuAppOffline",2);
+
+  
+
+
+
+
+
+request.onupgradeneeded=()=>{
+ const database=request.result;
+
+ // Store chat messages
+ if(!database.objectStoreNames.contains("messages")){
+  database.createObjectStore("messages",{keyPath:"id"});
+ }
+
+ // Store Community Updates
+ if(!database.objectStoreNames.contains("posts")){
+  database.createObjectStore("posts",{keyPath:"id"});
+ }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+  request.onsuccess=()=>{
+   jehuOfflineDB=request.result;
+   resolve(jehuOfflineDB);
+  };
+
+  request.onerror=()=>reject(request.error);
+ });
+}
+
+async function saveOfflineMessages(messages){
+ try{
+  const database=await openJehuOfflineDB();
+
+  await new Promise((resolve,reject)=>{
+   const tx=database.transaction("messages","readwrite");
+   const store=tx.objectStore("messages");
+
+   messages.forEach(message=>store.put(message));
+
+   tx.oncomplete=resolve;
+   tx.onerror=()=>reject(tx.error);
+  });
+ }catch(error){
+  console.error("Offline message save failed:",error);
+ }
+}
+
+async function getOfflineMessages(){
+ try{
+  const database=await openJehuOfflineDB();
+
+  return await new Promise((resolve,reject)=>{
+   const tx=database.transaction("messages","readonly");
+   const request=tx.objectStore("messages").getAll();
+
+   request.onsuccess=()=>resolve(request.result||[]);
+   request.onerror=()=>reject(request.error);
+  });
+ }catch(error){
+  console.error("Offline message read failed:",error);
+  return [];
+ }
+}
+
+
+
+
+
+async function saveOfflinePosts(posts){
+ try{
+  const database=await openJehuOfflineDB();
+
+  await new Promise((resolve,reject)=>{
+   const tx=database.transaction("posts","readwrite");
+   const store=tx.objectStore("posts");
+
+   posts.forEach(post=>store.put(post));
+
+   tx.oncomplete=resolve;
+   tx.onerror=()=>reject(tx.error);
+  });
+ }catch(error){
+  console.error("Offline posts save failed:",error);
+ }
+}
+
+async function getOfflinePosts(){
+ try{
+  const database=await openJehuOfflineDB();
+
+  return await new Promise((resolve,reject)=>{
+   const tx=database.transaction("posts","readonly");
+   const request=tx.objectStore("posts").getAll();
+
+   request.onsuccess=()=>resolve(request.result||[]);
+   request.onerror=()=>reject(request.error);
+  });
+ }catch(error){
+  console.error("Offline posts read failed:",error);
+  return [];
+ }
+}
+
+
+
+
+
+
+
+
+
 async function loadMessages(){
  if(!user||!peer)return;
- $("messages").innerHTML='<div class="empty">Loading chat history...</div>';
- const filter=`and(sender_id.eq.${user.id},recipient_id.eq.${peer.id}),and(sender_id.eq.${peer.id},recipient_id.eq.${user.id})`;
- const {data,error}=await db.from("jehu_messages")
-  .select("id,sender_id,recipient_id,body,created_at")
-  .or(filter).order("created_at",{ascending:true}).limit(200);
- if(error){
-  $("messages").textContent="Unable to load history: "+error.message;
-  return;
+
+ $("messages").innerHTML=
+  '<div class="empty">Loading chat history...</div>';
+
+ let data=[];
+ let offline=false;
+
+ // Try loading messages from Supabase
+ try{
+  const filter=
+   `and(sender_id.eq.${user.id},recipient_id.eq.${peer.id}),`+
+   `and(sender_id.eq.${peer.id},recipient_id.eq.${user.id})`;
+
+  const result=await db.from("jehu_messages")
+   .select("id,sender_id,recipient_id,body,created_at")
+   .or(filter)
+   .order("created_at",{ascending:true})
+   .limit(200);
+
+  if(result.error)throw result.error;
+
+  data=result.data||[];
+
+  // Save a private copy for this signed-in account
+  const saved=data.map(message=>({
+   ...message,
+   ownerId:user.id
+  }));
+
+  await saveOfflineMessages(saved);
+
+ }catch(error){
+  console.log("Using saved offline messages:",error);
+
+  offline=true;
+
+  const saved=await getOfflineMessages();
+
+  // Only show messages belonging to this account
+  // and this particular conversation
+  data=saved.filter(message=>
+   message.ownerId===user.id&&
+   (
+    (message.sender_id===user.id&&
+     message.recipient_id===peer.id)||
+    (message.sender_id===peer.id&&
+     message.recipient_id===user.id)
+   )
+  );
+
+  data.sort((a,b)=>
+   new Date(a.created_at)-new Date(b.created_at)
+  );
  }
+
  if(!data.length){
-  $("messages").innerHTML='<div class="empty">No messages yet. Say hello!</div>';
+  $("messages").innerHTML=offline
+   ?'<div class="empty">No saved offline messages for this chat.</div>'
+   :'<div class="empty">No messages yet. Say hello!</div>';
   return;
  }
+
  const rendered=[];
+
  for(const m of data){
   const mine=m.sender_id===user.id;
   let rawBody=m.body||"",colour="",content="";
+
   const styleMatch=rawBody.match(/^STYLE:(#[0-9a-fA-F]{6})\n/);
+
   if(styleMatch){
    colour=styleMatch[1];
    rawBody=rawBody.slice(styleMatch[0].length);
   }
+
   const animation=rawBody.match(/^ANIM:(hearts|party|sparkle|laugh|wow)$/);
+
   if(animation){
-   const stickers={hearts:"💖",party:"🎉",sparkle:"✨",laugh:"😂",wow:"🤩"};
+   const stickers={
+    hearts:"💖",
+    party:"🎉",
+    sparkle:"✨",
+    laugh:"😂",
+    wow:"🤩"
+   };
+
    content=`<div class="animated-sticker anim-${animation[1]}">${stickers[animation[1]]}</div>`;
+
   }else{
    const mediaMatch=rawBody.match(/^(IMG|GIF|VIDEO|AUDIO|VOICE):([^\n]+)(?:\n([\s\S]*))?$/);
+
    if(mediaMatch){
-    const kind=mediaMatch[1],path=mediaMatch[2],caption=mediaMatch[3]||"";
-    try{
-     const url=await imageUrl(path);
-     if(kind==="IMG"||kind==="GIF"){
-      content=`<a href="${esc(url)}" target="_blank" rel="noopener"><img class="chat-image" src="${esc(url)}" alt="${kind==="GIF"?"Animated GIF":"Picture message"}"></a>`;
-     }else if(kind==="VIDEO"){
-      content=`<video controls playsinline preload="metadata" style="display:block;max-width:100%;max-height:280px;border-radius:8px"><source src="${esc(url)}"></video>`;
-     }else{
-      content=`<audio controls preload="metadata" style="max-width:100%"><source src="${esc(url)}"></audio>`;
+    const kind=mediaMatch[1];
+    const caption=mediaMatch[3]||"";
+
+    if(offline){
+     content='<i>Media needs an internet connection unless it was saved on this device.</i>';
+    }else{
+     try{
+      const url=await imageUrl(mediaMatch[2]);
+
+      if(kind==="IMG"||kind==="GIF"){
+       content=`<a href="${esc(url)}" target="_blank" rel="noopener"><img class="chat-image" src="${esc(url)}" alt="Picture message"></a>`;
+      }else if(kind==="VIDEO"){
+       content=`<video controls playsinline preload="metadata" style="display:block;max-width:100%;max-height:280px;border-radius:8px"><source src="${esc(url)}"></video>`;
+      }else{
+       content=`<audio controls preload="metadata" style="max-width:100%"><source src="${esc(url)}"></audio>`;
+      }
+     }catch(error){
+      content='<i>Media unavailable</i>';
      }
-     if(caption)content+=`<div>${esc(caption)}</div>`;
-    }catch{
-     content='<i>Media unavailable</i>';
     }
-   }else if(rawBody.startsWith("IMG:")){
-    try{
-     const url=await imageUrl(rawBody.slice(4));
-     content=`<a href="${esc(url)}" target="_blank" rel="noopener"><img class="chat-image" src="${esc(url)}" alt="Picture message"></a>`;
-    }catch{
-     content='<i>Picture unavailable</i>';
-    }
+
+    if(caption)content+=`<div>${esc(caption)}</div>`;
+
    }else{
     content=esc(rawBody);
    }
   }
+
   const inlineStyle=colour?` style="background:${colour};"`:"";
-  rendered.push(`<div class="bubble-row ${mine?"mine":""}"><div class="bubble"${inlineStyle}>${content}<div class="time">${esc(time(m.created_at))}</div></div></div>`);
+
+  rendered.push(`
+   <div class="bubble-row ${mine?"mine":""}">
+    <div class="bubble"${inlineStyle}>
+     ${content}
+     <div class="time">${esc(time(m.created_at))}</div>
+    </div>
+   </div>
+  `);
  }
- $("messages").innerHTML=rendered.join("");
+
+ $("messages").innerHTML=
+  (offline
+   ?'<div class="empty">Offline mode — showing saved messages.</div>'
+   :"")+
+  rendered.join("");
+
  $("messages").scrollTop=$("messages").scrollHeight;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 $("videoFile").addEventListener("change",e=>chooseMedia("VIDEO",e.target.files[0]));
 $("audioFile").addEventListener("change",e=>chooseMedia("AUDIO",e.target.files[0]));

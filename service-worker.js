@@ -1,14 +1,16 @@
 
-const CACHE_NAME = "jehuapp-v3";
+const CACHE_NAME = "jehuapp-v4";
 
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/icon.png.png"
+  "/icon.png.png",
+  "/video.html",
+  "/sicentific.html"
 ];
 
-// Firebase configuration
+// Firebase background notifications
 importScripts(
   "https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"
 );
@@ -28,41 +30,99 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Install
+// Install and cache app pages
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
+    caches.open(CACHE_NAME).then(async cache => {
+      await Promise.all(
+        FILES_TO_CACHE.map(async file => {
+          try {
+            const response = await fetch(file);
+            if (response.ok) {
+              await cache.put(file, response);
+            }
+          } catch (error) {
+            console.log("Could not cache:", file);
+          }
+        })
+      );
+    })
   );
 
   self.skipWaiting();
 });
 
-// Activate
+// Activate and remove old JehuApp caches
 self.addEventListener("activate", event => {
   event.waitUntil(
-    Promise.all([
-      self.clients.claim(),
-      caches.keys().then(keys =>
-        Promise.all(
-          keys
-            .filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-        )
-      )
-    ])
+    (async () => {
+      const keys = await caches.keys();
+
+      await Promise.all(
+        keys
+          .filter(key =>
+            key.startsWith("jehuapp-") && key !== CACHE_NAME
+          )
+          .map(key => caches.delete(key))
+      );
+
+      await self.clients.claim();
+    })()
   );
 });
 
-// Offline support
+// Offline page and file support
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
+  const request = event.request;
+
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+
+  // Do not cache Supabase, Firebase or other external requests
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    fetch(event.request).catch(() =>
-      caches.match(event.request).then(response =>
-        response || caches.match("/")
-      )
-    )
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      if (request.mode === "navigate") {
+        try {
+          const response = await fetch(request);
+
+          if (response.ok) {
+            await cache.put("/index.html", response.clone());
+          }
+
+          return response;
+        } catch (error) {
+          return (
+            await cache.match(request) ||
+            await cache.match("/index.html") ||
+            await cache.match("/")
+          );
+        }
+      }
+
+      const cached = await cache.match(request);
+
+      if (cached) return cached;
+
+      try {
+        const response = await fetch(request);
+
+        if (response.ok && response.type === "basic") {
+          await cache.put(request, response.clone());
+        }
+
+        return response;
+      } catch (error) {
+        return new Response("You are offline. This file is not saved yet.", {
+          status: 503,
+          headers: { "Content-Type": "text/plain" }
+        });
+      }
+    })()
   );
 });
 
@@ -70,21 +130,20 @@ self.addEventListener("fetch", event => {
 messaging.onBackgroundMessage(payload => {
   const data = payload.data || {};
 
-  const title = data.title || "JehuApp incoming call";
-
-  const options = {
-    body: data.body || "Someone is trying to reach you on JehuApp.",
-    icon: "/icon.png.png",
-    badge: "/icon.png.png",
-    tag: data.callId || "jehuapp-notification",
-    renotify: true,
-    data: {
-      url: data.url || "/",
-      callId: data.callId || ""
+  return self.registration.showNotification(
+    data.title || "JehuApp notification",
+    {
+      body: data.body || "You have a new notification.",
+      icon: "/icon.png.png",
+      badge: "/icon.png.png",
+      tag: data.callId || "jehuapp-notification",
+      renotify: true,
+      data: {
+        url: data.url || "/",
+        callId: data.callId || ""
+      }
     }
-  };
-
-  return self.registration.showNotification(title, options);
+  );
 });
 
 // Open JehuApp when notification is clicked
@@ -111,91 +170,3 @@ self.addEventListener("notificationclick", event => {
     })
   );
 });
-
-
-
-
-
-
-
-
-
-
-
-const CACHE_NAME = "jehuapp-v2";
-
-self.addEventListener("install", event => {
-  self.skipWaiting();
-});
-
-self.addEventListener("activate", event => {
-  event.waitUntil(self.clients.claim());
-});
-
-self.addEventListener("fetch", event => {
-  event.respondWith(fetch(event.request));
-});
-
- document.getElementById("webSearchForm")
-.addEventListener("submit", function(event) {
-   event.preventDefault();
-
-  const query = document.getElementById("webSearchInput")
-     .value.trim();
-
-  if (!query) return;
-
-  const searchURL =
-   "https://www.google.com/search?q=" +
-   encodeURIComponent(query) +
-    "&safe=active";
-
-   window.open(searchURL, "_blank", "noopener,noreferrer");
-});
-
-
-
-
-const CACHE_NAME = "jehuapp-v1";
-
-const FILES_TO_CACHE = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/icon.png.png"
-];
-
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(FILES_TO_CACHE);
-    })
-  );
-  self.skipWaiting();
-});
-
-self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
-    )
-  );
-  self.clients.claim();
-});
-
-self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
-
-  event.respondWith(
-    fetch(event.request).catch(() =>
-      caches.match(event.request).then(response =>
-        response || caches.match("/")
-      )
-    )
-  );
-});
-
