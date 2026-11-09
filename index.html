@@ -710,17 +710,25 @@ async function registerJehuPush(userId) {
 
     const registration = await navigator.serviceWorker.ready;
 
-    if (!firebaseApp) {
-      firebaseApp = firebase.initializeApp({
-        apiKey: "BKZdm7O3p9NQYqNmGcIRtFYRpoaWo5CPkSDGFIsY7mAEKeoFLwuE6tAyhVf0dbwaWZCirO_8vguTKrVPn76L7dU",
-        authDomain: "jehuapp-b8928.firebaseapp.com",
-        projectId: "jehuapp-b8928",
-        storageBucket: "jehuapp-b8928.firebasestorage.app",
-        messagingSenderId: "1087051550482",
-        appId: "1:1087051550482:web:b2f5bed91d9b4c1d5e6dcb"
-      });
-      firebaseMessaging = firebase.messaging(firebaseApp);
-    }
+    
+
+
+if (!firebaseApp) {
+  firebaseApp = firebase.initializeApp({
+    apiKey: "AIzaSyDCMjsdgXRBf370BSuyhgMgzA8ZZEN9AIU",
+    authDomain: "jehuapp-b8928.firebaseapp.com",
+    projectId: "jehuapp-b8928",
+    storageBucket: "jehuapp-b8928.firebasestorage.app",
+    messagingSenderId: "1087051550482",
+    appId: "1:1087051550482:web:b2f5bed91d9b4c1d5e6dcb",
+    measurementId: "G-NYT45RLZX5"
+  });
+
+  firebaseMessaging = firebase.messaging(firebaseApp);
+}
+
+
+
 
     const token = await firebaseMessaging.getToken({
       vapidKey: FIREBASE_VAPID_KEY,
