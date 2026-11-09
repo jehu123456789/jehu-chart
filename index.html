@@ -1646,6 +1646,11 @@ async function loadMessages(){
 
   const saved=await getOfflineMessages();
 
+console.log("ALL SAVED MESSAGES:",saved);
+console.log("CURRENT USER:",user.id);
+console.log("SELECTED PERSON:",peer.id);
+
+
   // Only show messages belonging to this account
   // and this particular conversation
   data=saved.filter(message=>
