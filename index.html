@@ -1042,10 +1042,17 @@ async function deletePost(id){
 
 
 
+
+
+
+
+
+
 async function openChat(){
  const id=$("peerId").value.trim();
 
  if(!id)return note("chatStatus","Paste a user ID first.");
+ if(!user)return note("chatStatus","Please log in first.");
  if(id===user.id)return note("chatStatus","You cannot message yourself.");
 
  if(callId && peer && peer.id!==id){
@@ -1054,63 +1061,71 @@ async function openChat(){
 
  let profile=null;
 
- // First check the profiles already saved on this device
+ // Find the saved profile name
  try{
   const cached=JSON.parse(
    localStorage.getItem("jehu_profiles_cache_"+user.id)||"[]"
   );
-
   profile=cached.find(p=>p.id===id)||null;
  }catch(error){
-  console.log("Profile cache unavailable:",error);
+  console.log("Profile cache:",error);
  }
 
- // Try Supabase, but don't require internet to open a saved chat
+ const contact=contacts.find(c=>String(c.id)===String(id));
+
+ // Open a saved contact immediately without waiting for internet
+ if(contact || profile){
+  peer={
+   id:id,
+   name:profile?.display_name?.trim()||
+        contact?.name||
+        "JehuApp member"
+  };
+
+  showSelectedChat();
+  await loadMessages();
+  return;
+ }
+
+ // Only search Supabase for a new, unsaved contact
  try{
   const {data,error}=await db.from("jehu_profiles")
    .select("id,display_name")
    .eq("id",id)
    .maybeSingle();
 
-  if(!error && data){
-   profile=data;
+  if(error)throw error;
 
-   try{
-    const cached=JSON.parse(
-     localStorage.getItem("jehu_profiles_cache_"+user.id)||"[]"
-    );
-
-    const updated=[
-     ...cached.filter(p=>p.id!==data.id),
-     data
-    ];
-
-    localStorage.setItem(
-     "jehu_profiles_cache_"+user.id,
-     JSON.stringify(updated)
-    );
-   }catch(cacheError){
-    console.log("Could not save profile:",cacheError);
-   }
+  if(!data){
+   return note("chatStatus","Person not found. Check the user ID.",true);
   }
+
+  profile=data;
+
+  const saved=JSON.parse(
+   localStorage.getItem("jehu_profiles_cache_"+user.id)||"[]"
+  );
+
+  localStorage.setItem(
+   "jehu_profiles_cache_"+user.id,
+   JSON.stringify([...saved.filter(p=>p.id!==id),data])
+  );
+
+  peer={
+   id:id,
+   name:data.display_name||"JehuApp member"
+  };
+
+  showSelectedChat();
+  await loadMessages();
+
  }catch(error){
-  console.log("Opening saved chat offline:",error);
+  console.error("Could not open chat:",error);
+  note("chatStatus","Could not find this person. Check your connection or user ID.",true);
  }
+}
 
- // If neither online nor cached profile exists, use the saved contact name
- const contact=contacts.find(c=>c.id===id);
-
- if(!profile && !contact){
-  return note("chatStatus","This person is not saved on this device. Connect to the internet first.",true);
- }
-
- peer={
-  id:id,
-  name:profile?.display_name?.trim()||
-       contact?.name||
-       "JehuApp member"
- };
-
+function showSelectedChat(){
  selectedBubbleColor=localStorage.getItem(bubbleColorKey())||"#075b46";
 
  $("chatTitle").textContent=peer.name;
@@ -1119,17 +1134,11 @@ async function openChat(){
  $("chatStatus").textContent="Chat opened.";
 
  renderContacts();
-
- // Load saved messages first, even without internet
- await loadMessages();
-
- // Set up live calling only when internet is available
- if(navigator.onLine){
-  connectCallChannel().catch(err=>{
-   console.warn("Video-call channel:",err.message);
-  });
- }
 }
+
+
+
+
 
 
 
