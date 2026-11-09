@@ -256,6 +256,25 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
 
 
 
+
+button,
+[role="button"] {
+    cursor: pointer;
+}
+
+body.jehu-processing,
+body.jehu-processing button,
+body.jehu-processing [role="button"] {
+    cursor: progress !important;
+}
+
+button:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.65;
+}
+
+
+
 </style>
 </head>
 
@@ -1967,6 +1986,28 @@ async function post(inputId,fileInputId,previewId){
 previewCommunityFile("homePostMedia","homePostPreview");
 previewCommunityFile("updatePostMedia","updatePostPreview");
 previewCommunityFile("productMedia","productMediaPreview");
+
+
+
+
+// JehuApp global button processing cursor
+document.addEventListener("click", function(e) {
+    const button = e.target.closest(
+        'button, [role="button"], input[type="button"], input[type="submit"]'
+    );
+
+    if (!button) return;
+
+    document.body.classList.add("jehu-processing");
+
+    clearTimeout(window.jehuCursorTimer);
+
+    window.jehuCursorTimer = setTimeout(function() {
+        document.body.classList.remove("jehu-processing");
+    }, 1200);
+});
+
+
 
 
 
