@@ -218,6 +218,41 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
   .compose{gap:5px;padding:8px}
   .compose .attach{font-size:18px;padding:8px}
 }
+
+
+.feed-media{
+ display:block;
+ width:100%;
+ max-width:680px;
+ max-height:440px;
+ object-fit:contain;
+ border-radius:12px;
+ margin:12px 0;
+ background:#06131b;
+}
+.media-pick{
+ display:inline-flex;
+ align-items:center;
+ gap:7px;
+ background:var(--panel2);
+ color:var(--green);
+ border:1px solid var(--line);
+ padding:10px 12px;
+ border-radius:10px;
+ margin:5px 6px 8px 0;
+ cursor:pointer;
+}
+.media-pick input{display:none}
+.media-preview{
+ display:block;
+ max-width:180px;
+ max-height:130px;
+ object-fit:contain;
+ border-radius:9px;
+ margin:8px 0;
+}
+
+
 </style>
 </head>
 
@@ -296,8 +331,18 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
   <a class="shortcut" href="./video.html" style="text-decoration:none"><span>🎬</span><b>Video Library</b>Open saved video links</a>
   <a class="shortcut" href="./sicentific.html" style="text-decoration:none"><span>🧮</span><b>Scientific Calculator</b>Open calculator</a>
  </div>
- <div class="card"><h3>Share a post</h3><textarea id="homePost" placeholder="What's on your mind?"></textarea><button class="primary" onclick="post('homePost')">Publish</button></div>
- <h3>Community feed</h3><div id="homeFeed"></div>
+ <div class="card">
+ <h3>Share a post</h3>
+ <textarea id="homePost" placeholder="What's on your mind?"></textarea>
+ <label class="media-pick">
+  📷 Add picture or video
+  <input id="homePostMedia" type="file" accept="image/*,video/*">
+ </label>
+ <div id="homePostPreview"></div>
+ <button class="primary" onclick="post('homePost','homePostMedia','homePostPreview')">
+  Publish
+ </button>
+</div>
 </section>
 
 <section class="page hidden" id="page-chats">
@@ -397,10 +442,26 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
  </div>
 </section>
 
+
+
 <section class="page hidden" id="page-updates">
- <div class="card"><h2>Community Updates</h2><textarea id="updatePost" placeholder="Share an update..."></textarea><button class="primary" onclick="post('updatePost')">Publish update</button></div>
+ <div class="card">
+  <h2>Community Updates</h2>
+  <textarea id="updatePost" placeholder="Share an update..."></textarea>
+  <label class="media-pick">
+   📷 Add picture or video
+   <input id="updatePostMedia" type="file" accept="image/*,video/*">
+  </label>
+  <div id="updatePostPreview"></div>
+  <button class="primary" onclick="post('updatePost','updatePostMedia','updatePostPreview')">
+   Publish update
+  </button>
+ </div>
  <div id="updatesFeed"></div>
 </section>
+
+
+
 
 <section class="page hidden" id="page-watch">
  <div class="card">
@@ -430,6 +491,14 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
     <option>Home</option>
     <option>Other</option>
    </select>
+
+<label>Product picture or video</label>
+<label class="media-pick">
+ 📷 / 🎬 Choose picture or video
+ <input id="productMedia" type="file" accept="image/*,video/*">
+</label>
+<div id="productMediaPreview"></div>
+
    <button class="primary">List product</button>
   </form>
   <div id="marketStatus" class="muted"></div>
@@ -598,7 +667,79 @@ async function start(u){
  $("userId").textContent=u.id;
  await ensureProfile();
  go("home");
- await Promise.all([loadPosts(),loadProducts(),loadRecentChats()]);
+ 
+
+
+
+
+
+async function loadPosts(){
+ if(!user)return;
+
+ for(const id of ["homeFeed","updatesFeed"])
+  $(id).innerHTML='<div class="empty">Loading...</div>';
+
+ const {data,error}=await db.from("jehu_posts")
+  .select("id,author_id,content,created_at")
+  .order("created_at",{ascending:false})
+  .limit(50);
+
+ if(error){
+  for(const id of ["homeFeed","updatesFeed"])
+   $(id).textContent=error.message;
+  return;
+ }
+
+ if(!data.length){
+  for(const id of ["homeFeed","updatesFeed"])
+   $(id).innerHTML='<div class="empty">No posts yet.</div>';
+  return;
+ }
+
+ const ids=[...new Set(data.map(p=>p.author_id))];
+ const {data:profiles}=await db.from("jehu_profiles")
+  .select("id,display_name").in("id",ids);
+
+ const cards=[];
+
+ for(const p of data){
+  const name=p.author_id===user.id
+   ?$("displayName").value
+   :((profiles||[]).find(x=>x.id===p.author_id)?.display_name||"JehuApp member");
+
+  let raw=String(p.content||""),mediaHtml="",caption=raw;
+  const match=raw.match(/^JEHU_MEDIA:(IMG|VIDEO):([^\n]+)\n([\s\S]*)$/);
+
+  if(match){
+   const kind=match[1],path=match[2];
+   caption=match[3]||"";
+
+   try{
+    const url=await imageUrl(path);
+    mediaHtml=kind==="IMG"
+     ?`<img class="feed-media" src="${esc(url)}" alt="Community picture">`
+     :`<video class="feed-media" controls playsinline preload="metadata"><source src="${esc(url)}"></video>`;
+   }catch{
+    mediaHtml='<p class="muted">Media could not be loaded.</p>';
+   }
+  }
+
+  cards.push(`
+   <article class="card">
+    <b>${esc(name)}</b>
+    <div class="muted">${esc(time(p.created_at))}</div>
+    ${caption?`<p>${esc(caption)}</p>`:""}
+    ${mediaHtml}
+    ${p.author_id===user.id?`<button class="secondary" onclick="deletePost('${esc(p.id)}')">Delete</button>`:""}
+   </article>
+  `);
+ }
+
+ $("homeFeed").innerHTML=cards.join("");
+ $("updatesFeed").innerHTML=cards.join("");
+}
+
+
 }
 
 async function ensureProfile(){
@@ -673,7 +814,109 @@ async function loadPosts(){
  }).join("");
  $("homeFeed").innerHTML=html;
  $("updatesFeed").innerHTML=html;
+
+
+
+
+
+
+$("productForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+
+ const button=e.submitter;
+ if(button)button.disabled=true;
+
+ try{
+  const price=Number($("productPrice").value);
+  const file=$("productMedia").files?.[0]||null;
+
+  let mediaPath=null,mediaType=null;
+
+  if(file){
+   mediaPath=await uploadCommunityMedia(file,"products");
+   mediaType=file.type.startsWith("video/")?"VIDEO":"IMG";
+  }
+
+  const {error}=await db.from("jehu_products").insert({
+   seller_id:user.id,
+   name:$("productName").value.trim(),
+   description:$("productDescription").value.trim(),
+   price,
+   category:$("productCategory").value,
+   media_path:mediaPath,
+   media_type:mediaType
+  });
+
+  if(error)throw error;
+
+  $("productForm").reset();
+  $("productMediaPreview").replaceChildren();
+  note("marketStatus","Product listed successfully.");
+  await loadProducts();
+
+ }catch(err){
+  note("marketStatus",err.message,true);
+ }finally{
+  if(button)button.disabled=false;
+ }
+});
+
+async function loadProducts(){
+ if(!user)return;
+
+ const {data,error}=await db.from("jehu_products")
+  .select("id,seller_id,name,description,price,category,media_path,media_type,created_at")
+  .order("created_at",{ascending:false}).limit(50);
+
+ if(error){
+  $("productList").textContent=error.message;
+  return;
+ }
+
+ if(!data.length){
+  $("productList").innerHTML='<div class="empty">No products listed yet.</div>';
+  $("featuredProducts").textContent="No products yet.";
+  return;
+ }
+
+ const cards=await Promise.all(data.map(async p=>{
+  let mediaHtml="";
+
+  if(p.media_path){
+   try{
+    const url=await imageUrl(p.media_path);
+    mediaHtml=p.media_type==="VIDEO"
+     ?`<video class="feed-media" controls playsinline><source src="${esc(url)}"></video>`
+     :`<img class="feed-media" src="${esc(url)}" alt="${esc(p.name)}">`;
+   }catch{
+    mediaHtml='<p class="muted">Product media unavailable.</p>';
+   }
+  }
+
+  return `
+   <div class="card product">
+    <div class="info">
+     <b>${esc(p.name)}</b>
+     ${mediaHtml}
+     <p class="muted">${esc(p.category||"Other")} · ${esc(p.description||"")}</p>
+     <p class="price">₦${Number(p.price).toLocaleString("en-NG")}</p>
+     ${p.seller_id===user.id
+      ?`<button class="secondary" onclick="deleteProduct('${esc(p.id)}')">Delete</button>`
+      :`<button class="secondary" onclick="messageSeller('${esc(p.seller_id)}')">Message seller</button>`}
+    </div>
+   </div>
+  `;
+ }));
+
+ $("productList").innerHTML=cards.join("");
+ $("featuredProducts").innerHTML=data.slice(0,3).map(p=>
+  `<p>${esc(p.name)} — <span class="price">₦${Number(p.price).toLocaleString("en-NG")}</span></p>`
+ ).join("");
 }
+
+ }
+
+
 
 async function post(inputId){
  const content=$(inputId).value.trim();
@@ -1497,6 +1740,199 @@ async function init(){
  }
 }
 init();
+
+
+async function uploadCommunityMedia(file,folder){
+ if(!file) throw new Error("Choose a picture or video first.");
+ if(!file.type.startsWith("image/")&&!file.type.startsWith("video/"))
+  throw new Error("Only pictures and videos are supported.");
+ if(file.size>50*1024*1024)
+  throw new Error("Choose a file smaller than 50 MB.");
+
+ const safeName=(file.name||"media").replace(/[^a-zA-Z0-9._-]/g,"_");
+ const path="community/"+folder+"/"+user.id+"/"+Date.now()+"-"+safeName;
+
+ const {error}=await db.storage.from(IMAGE_BUCKET).upload(
+  path,file,{contentType:file.type,upsert:false}
+ );
+ if(error) throw error;
+ return path;
+}
+
+function previewCommunityFile(inputId,previewId){
+ const input=$(inputId),box=$(previewId);
+ if(!input||!box)return;
+
+ input.addEventListener("change",()=>{
+  box.replaceChildren();
+  const file=input.files?.[0];
+  if(!file)return;
+
+  if(!file.type.startsWith("image/")&&!file.type.startsWith("video/")){
+   alert("Choose an image or video.");
+   input.value="";
+   return;
+  }
+
+  if(file.size>50*1024*1024){
+   alert("Choose a file smaller than 50 MB.");
+   input.value="";
+   return;
+  }
+
+  const url=URL.createObjectURL(file);
+  const media=file.type.startsWith("video/")
+   ?document.createElement("video")
+   :document.createElement("img");
+
+  if(media.tagName==="VIDEO"){
+   media.controls=true;
+   media.playsInline=true;
+  }else{
+   media.alt="Selected picture preview";
+  }
+
+  media.src=url;
+  media.className="media-preview";
+  box.append(media);
+ });
+}
+
+async function post(inputId,fileInputId,previewId){
+ const content=$(inputId).value.trim();
+ const file=fileInputId?$(fileInputId).files?.[0]:null;
+
+ if(!content&&!file)
+  return alert("Write something or choose a picture/video.");
+
+ try{
+  let savedContent=content;
+
+  if(file){
+   const path=await uploadCommunityMedia(file,"posts");
+   const kind=file.type.startsWith("video/")?"VIDEO":"IMG";
+   savedContent=`JEHU_MEDIA:${kind}:${path}\n${content}`;
+  }
+
+  const {error}=await db.from("jehu_posts").insert({
+   author_id:user.id,
+   content:savedContent
+  });
+
+  if(error)throw error;
+
+  $(inputId).value="";
+  if(fileInputId)$(fileInputId).value="";
+  if(previewId)$(previewId).replaceChildren();
+
+  await loadPosts();
+ 
+
+$("productForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+
+ const button=e.submitter;
+ if(button)button.disabled=true;
+
+ try{
+  const price=Number($("productPrice").value);
+  const file=$("productMedia").files?.[0]||null;
+
+  let mediaPath=null,mediaType=null;
+
+  if(file){
+   mediaPath=await uploadCommunityMedia(file,"products");
+   mediaType=file.type.startsWith("video/")?"VIDEO":"IMG";
+  }
+
+  const {error}=await db.from("jehu_products").insert({
+   seller_id:user.id,
+   name:$("productName").value.trim(),
+   description:$("productDescription").value.trim(),
+   price,
+   category:$("productCategory").value,
+   media_path:mediaPath,
+   media_type:mediaType
+  });
+
+  if(error)throw error;
+
+  $("productForm").reset();
+  $("productMediaPreview").replaceChildren();
+  note("marketStatus","Product listed successfully.");
+  await loadProducts();
+
+ }catch(err){
+  note("marketStatus",err.message,true);
+ }finally{
+  if(button)button.disabled=false;
+ }
+});
+
+async function loadProducts(){
+ if(!user)return;
+
+ const {data,error}=await db.from("jehu_products")
+  .select("id,seller_id,name,description,price,category,media_path,media_type,created_at")
+  .order("created_at",{ascending:false}).limit(50);
+
+ if(error){
+  $("productList").textContent=error.message;
+  return;
+ }
+
+ if(!data.length){
+  $("productList").innerHTML='<div class="empty">No products listed yet.</div>';
+  $("featuredProducts").textContent="No products yet.";
+  return;
+ }
+
+ const cards=await Promise.all(data.map(async p=>{
+  let mediaHtml="";
+
+  if(p.media_path){
+   try{
+    const url=await imageUrl(p.media_path);
+    mediaHtml=p.media_type==="VIDEO"
+     ?`<video class="feed-media" controls playsinline><source src="${esc(url)}"></video>`
+     :`<img class="feed-media" src="${esc(url)}" alt="${esc(p.name)}">`;
+   }catch{
+    mediaHtml='<p class="muted">Product media unavailable.</p>';
+   }
+  }
+
+  return `
+   <div class="card product">
+    <div class="info">
+     <b>${esc(p.name)}</b>
+     ${mediaHtml}
+     <p class="muted">${esc(p.category||"Other")} · ${esc(p.description||"")}</p>
+     <p class="price">₦${Number(p.price).toLocaleString("en-NG")}</p>
+     ${p.seller_id===user.id
+      ?`<button class="secondary" onclick="deleteProduct('${esc(p.id)}')">Delete</button>`
+      :`<button class="secondary" onclick="messageSeller('${esc(p.seller_id)}')">Message seller</button>`}
+    </div>
+   </div>
+  `;
+ }));
+
+ $("productList").innerHTML=cards.join("");
+ $("featuredProducts").innerHTML=data.slice(0,3).map(p=>
+  `<p>${esc(p.name)} — <span class="price">₦${Number(p.price).toLocaleString("en-NG")}</span></p>`
+ ).join("");
+ }
+
+
+
+
+ }
+ }
+
+
+previewCommunityFile("homePostMedia","homePostPreview");
+previewCommunityFile("updatePostMedia","updatePostPreview");
+previewCommunityFile("productMedia","productMediaPreview");
+
 </script>
 
 <script>
