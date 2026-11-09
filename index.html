@@ -1605,7 +1605,6 @@ async function getOfflinePosts(){
 
 
 
-
 async function loadMessages(){
  if(!user||!peer)return;
 
@@ -1615,7 +1614,25 @@ async function loadMessages(){
  let data=[];
  let offline=false;
 
- // Try loading messages from Supabase
+ // Identify messages belonging to this conversation
+ const isThisChat=message=>
+  (message.sender_id===user.id&&
+   message.recipient_id===peer.id)||
+  (message.sender_id===peer.id&&
+   message.recipient_id===user.id);
+
+ // FIRST: Read saved messages from this device
+ let cachedMessages=[];
+
+ try{
+  const saved=await getOfflineMessages();
+  cachedMessages=saved.filter(isThisChat);
+  data=[...cachedMessages];
+ }catch(error){
+  console.error("Could not read saved chat:",error);
+ }
+
+ // SECOND: Try loading newer messages from Supabase
  try{
   const filter=
    `and(sender_id.eq.${user.id},recipient_id.eq.${peer.id}),`+
@@ -1629,49 +1646,38 @@ async function loadMessages(){
 
   if(result.error)throw result.error;
 
-  data=result.data||[];
+  const onlineMessages=result.data||[];
 
-  // Save a private copy for this signed-in account
-  const saved=data.map(message=>({
+  // Save online messages for future offline use
+  const savedOnline=onlineMessages.map(message=>({
    ...message,
    ownerId:user.id
   }));
 
-  await saveOfflineMessages(saved);
+  await saveOfflineMessages(savedOnline);
+
+  // Combine saved and online messages without duplicates
+  const combined=new Map();
+
+  [...cachedMessages,...onlineMessages].forEach(message=>{
+   combined.set(String(message.id),message);
+  });
+
+  data=Array.from(combined.values());
 
  }catch(error){
   console.log("Using saved offline messages:",error);
-
   offline=true;
-
-  const saved=await getOfflineMessages();
-
-console.log("ALL SAVED MESSAGES:",saved);
-console.log("CURRENT USER:",user.id);
-console.log("SELECTED PERSON:",peer.id);
-
-
-  // Only show messages belonging to this account
-  // and this particular conversation
-  data=saved.filter(message=>
-   
-   (
-    (message.sender_id===user.id&&
-     message.recipient_id===peer.id)||
-    (message.sender_id===peer.id&&
-     message.recipient_id===user.id)
-   )
-  );
-
-  data.sort((a,b)=>
-   new Date(a.created_at)-new Date(b.created_at)
-  );
  }
 
+ // Keep messages in chronological order
+ data.sort((a,b)=>
+  new Date(a.created_at)-new Date(b.created_at)
+ );
+
  if(!data.length){
-  $("messages").innerHTML=offline
-   ?'<div class="empty">No saved offline messages for this chat.</div>'
-   :'<div class="empty">No messages yet. Say hello!</div>';
+  $("messages").innerHTML=
+   '<div class="empty">No saved messages for this chat yet.</div>';
   return;
  }
 
@@ -1709,7 +1715,7 @@ console.log("SELECTED PERSON:",peer.id);
     const caption=mediaMatch[3]||"";
 
     if(offline){
-     content='<i>Media needs an internet connection unless it was saved on this device.</i>';
+     content='<i>Media needs an internet connection unless saved on this device.</i>';
     }else{
      try{
       const url=await imageUrl(mediaMatch[2]);
@@ -1753,6 +1759,7 @@ console.log("SELECTED PERSON:",peer.id);
 
  $("messages").scrollTop=$("messages").scrollHeight;
 }
+
 
 
 
