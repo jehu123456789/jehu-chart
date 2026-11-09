@@ -879,14 +879,92 @@ async function loadPosts(){
 
 
 
-async function post(inputId){
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function post(inputId,fileInputId,previewId){
  const content=$(inputId).value.trim();
- if(!content)return alert("Write something first.");
- const {error}=await db.from("jehu_posts").insert({author_id:user.id,content});
- if(error)return alert(error.message);
- $(inputId).value="";
- await loadPosts();
+ const file=fileInputId?$(fileInputId)?.files?.[0]:null;
+
+ if(!content&&!file){
+  return alert("Write something or choose a picture/video.");
+ }
+
+ try{
+  let savedContent=content;
+
+  if(file){
+   const path=await uploadCommunityMedia(file,"posts");
+   const kind=file.type.startsWith("video/")?"VIDEO":"IMG";
+   savedContent=`JEHU_MEDIA:${kind}:${path}\n${content}`;
+  }
+
+  const {error}=await db.from("jehu_posts").insert({
+   author_id:user.id,
+   content:savedContent
+  });
+
+  if(error)throw error;
+
+  $(inputId).value="";
+
+  if(fileInputId)$(fileInputId).value="";
+  if(previewId)$(previewId).replaceChildren();
+
+  await loadPosts();
+
+  alert("Post published successfully!");
+
+ }catch(err){
+  alert("Could not publish: "+err.message);
+ }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function deletePost(id){
  if(!confirm("Delete this post?"))return;
