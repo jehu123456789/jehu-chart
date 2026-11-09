@@ -1070,6 +1070,9 @@ async function selectContact(id){
 
 
 
+
+
+
 async function loadRecentChats(){
  if(!user)return;
 
@@ -1077,7 +1080,18 @@ async function loadRecentChats(){
  let profiles=[];
  let offline=false;
 
- // Try loading recent chats from Supabase
+ const profileCacheKey="jehu_profiles_cache_"+user.id;
+
+ // Load previously saved profile names
+ try{
+  profiles=JSON.parse(
+   localStorage.getItem(profileCacheKey)||"[]"
+  );
+ }catch(error){
+  profiles=[];
+ }
+
+ // Try loading messages from Supabase
  try{
   const {data:onlineData,error}=await db.from("jehu_messages")
    .select("id,sender_id,recipient_id,body,created_at")
@@ -1090,40 +1104,61 @@ async function loadRecentChats(){
   data=onlineData||[];
 
   // Save messages for offline use
-  const saved=data.map(m=>({
-   ...m,
-   ownerId:user.id
-  }));
+  try{
+   await saveOfflineMessages(data.map(m=>({
+    ...m,
+    ownerId:user.id
+   })));
+  }catch(error){
+   console.log("Could not save offline messages:",error);
+  }
 
-  await saveOfflineMessages(saved);
-
+  // Get unique conversation partners
   const ids=[...new Set(
-   data.map(m=>m.sender_id===user.id?m.recipient_id:m.sender_id)
+   data.map(m=>
+    m.sender_id===user.id?m.recipient_id:m.sender_id
+   )
   )];
 
+  // Load real profile names separately
   if(ids.length){
-   const result=await db.from("jehu_profiles")
-    .select("id,display_name")
-    .in("id",ids);
+   try{
+    const result=await db.from("jehu_profiles")
+     .select("id,display_name")
+     .in("id",ids);
 
-   if(result.error)throw result.error;
+    if(!result.error && result.data){
+     profiles=result.data;
 
-   profiles=result.data||[];
+     localStorage.setItem(
+      profileCacheKey,
+      JSON.stringify(profiles)
+     );
+    }
+   }catch(error){
+    console.log("Could not load profile names:",error);
+   }
   }
 
  }catch(error){
   console.log("Loading saved chats offline:",error);
   offline=true;
 
-  const saved=await getOfflineMessages();
+  try{
+   const saved=await getOfflineMessages();
 
-  data=saved.filter(m=>m.ownerId===user.id);
+   data=saved.filter(m=>m.ownerId===user.id);
 
-  data.sort((a,b)=>
-   new Date(b.created_at)-new Date(a.created_at)
-  );
+   data.sort((a,b)=>
+    new Date(b.created_at)-new Date(a.created_at)
+   );
+  }catch(cacheError){
+   console.log("Offline messages unavailable:",cacheError);
+   data=[];
+  }
  }
 
+ // Get unique conversation partners
  const ids=[...new Set(
   data.map(m=>
    m.sender_id===user.id?m.recipient_id:m.sender_id
@@ -1138,6 +1173,7 @@ async function loadRecentChats(){
   return;
  }
 
+ // Build one contact for each person
  contacts=ids.map(id=>{
   const m=data.find(x=>
    x.sender_id===id||x.recipient_id===id
@@ -1147,12 +1183,13 @@ async function loadRecentChats(){
 
   return {
    id,
-   name:profile?.display_name||"JehuApp member",
+   name:profile?.display_name?.trim()||"JehuApp member",
    last:m?.body||"",
    date:m?.created_at
   };
  });
 
+ // Display conversations
  renderContacts();
 
  if(offline){
@@ -1162,6 +1199,10 @@ async function loadRecentChats(){
   );
  }
 }
+
+
+
+
 
 
 
@@ -1819,58 +1860,113 @@ $("productForm").addEventListener("submit",async e=>{
 
 
 
+
+
+
+
+
+
 async function loadProducts(){
  if(!user)return;
 
- const {data,error}=await db.from("jehu_products")
-  .select("id,seller_id,name,description,price,category,media_path,media_type,created_at")
-  .order("created_at",{ascending:false}).limit(50);
+ const cacheKey="jehu_products_cache";
 
- if(error){
-  $("productList").textContent=error.message;
-  return;
- }
-
- if(!data.length){
-  $("productList").innerHTML='<div class="empty">No products listed yet.</div>';
-  $("featuredProducts").textContent="No products yet.";
-  return;
- }
-
- const cards=await Promise.all(data.map(async p=>{
-  let mediaHtml="";
-
-  if(p.media_path){
-   try{
-    const url=await imageUrl(p.media_path);
-    mediaHtml=p.media_type==="VIDEO"
-     ?`<video class="feed-media" controls playsinline><source src="${esc(url)}"></video>`
-     :`<img class="feed-media" src="${esc(url)}" alt="${esc(p.name)}">`;
-   }catch{
-    mediaHtml='<p class="muted">Product media unavailable.</p>';
-   }
+ function showProducts(data){
+  if(!data || !data.length){
+   $("productList").innerHTML=
+    '<div class="empty">No products listed yet.</div>';
+   $("featuredProducts").textContent="No products yet.";
+   return;
   }
 
-  return `
-   <div class="card product">
-    <div class="info">
-     <b>${esc(p.name)}</b>
-     ${mediaHtml}
-     <p class="muted">${esc(p.category||"Other")} · ${esc(p.description||"")}</p>
-     <p class="price">₦${Number(p.price).toLocaleString("en-NG")}</p>
-     ${p.seller_id===user.id
-      ?`<button class="secondary" onclick="deleteProduct('${esc(p.id)}')">Delete</button>`
-      :`<button class="secondary" onclick="messageSeller('${esc(p.seller_id)}')">Message seller</button>`}
-    </div>
-   </div>
-  `;
- }));
+  $("featuredProducts").innerHTML=data.slice(0,3).map(p=>
+   `<p>${esc(p.name)} — <span class="price">₦${Number(p.price).toLocaleString("en-NG")}</span></p>`
+  ).join("");
 
- $("productList").innerHTML=cards.join("");
- $("featuredProducts").innerHTML=data.slice(0,3).map(p=>
-  `<p>${esc(p.name)} — <span class="price">₦${Number(p.price).toLocaleString("en-NG")}</span></p>`
- ).join("");
+  $("productList").innerHTML=data.map(p=>{
+   return `
+    <div class="card product">
+     <div class="info">
+      <b>${esc(p.name)}</b>
+      <div class="product-media" id="product-media-${esc(p.id)}">
+       ${p.media_path?'<p class="muted">Loading media...</p>':''}
+      </div>
+      <p class="muted">${esc(p.category||"Other")} · ${esc(p.description||"")}</p>
+      <p class="price">₦${Number(p.price).toLocaleString("en-NG")}</p>
+      ${p.seller_id===user.id
+       ?`<button class="secondary" onclick="deleteProduct('${esc(p.id)}')">Delete</button>`
+       :`<button class="secondary" onclick="messageSeller('${esc(p.seller_id)}')">Message seller</button>`}
+     </div>
+    </div>
+   `;
+  }).join("");
+
+  data.forEach(async p=>{
+   if(!p.media_path)return;
+
+   const target=$("product-media-"+p.id);
+   if(!target)return;
+
+   try{
+    const url=await imageUrl(p.media_path);
+    if(!url)return;
+
+    target.innerHTML=p.media_type==="VIDEO"
+     ?`<video class="feed-media" controls playsinline><source src="${esc(url)}"></video>`
+     :`<img class="feed-media" src="${esc(url)}" alt="${esc(p.name)}">`;
+
+   }catch(error){
+    target.innerHTML='<p class="muted">Product media unavailable offline.</p>';
+   }
+  });
+ }
+
+ // Show saved products immediately
+ let savedProducts=[];
+
+ try{
+  savedProducts=JSON.parse(localStorage.getItem(cacheKey)||"[]");
+  if(savedProducts.length){
+   showProducts(savedProducts);
+  }
+ }catch(error){
+  console.log("Product cache unavailable:",error);
+ }
+
+ // Try loading fresh products from Supabase
+ try{
+  const {data,error}=await db.from("jehu_products")
+   .select("id,seller_id,name,description,price,category,media_path,media_type,created_at")
+   .order("created_at",{ascending:false})
+   .limit(50);
+
+  if(error)throw error;
+
+  localStorage.setItem(cacheKey,JSON.stringify(data||[]));
+  showProducts(data||[]);
+
+ }catch(error){
+  console.error("Marketplace connection error:",error);
+
+  if(savedProducts.length){
+   $("productList").insertAdjacentHTML(
+    "afterbegin",
+    '<p class="muted">Offline mode — showing saved products.</p>'
+   );
+  }else{
+   $("productList").innerHTML=
+    '<div class="empty">Cannot connect to Marketplace. No saved products available yet.</div>';
+  }
+ }
 }
+
+
+
+
+
+
+
+
 
 
 
