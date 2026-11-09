@@ -12,8 +12,6 @@
 <link rel="icon" type="image/png" href="/icon.png.png">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 
 <style>
 :root {
@@ -590,72 +588,6 @@ $("authForm").addEventListener("submit",async e=>{
  }
 });
 
-
-const FIREBASE_VAPID_KEY = "BKZdm7O3p9NQYqNmGcIRtFYRpoaWo5CPkSDGFIsY7mAEKeoFLwuE6tAyhVf0dbwaWZCirO_8vguTKrVPn76L7dU";
-
-let firebaseApp = null;
-let firebaseMessaging = null;
-
-async function registerJehuPush(userId) {
-  if (!("serviceWorker" in navigator) || !("Notification" in window)) {
-    console.log("Push notifications are not supported here.");
-    return;
-  }
-
-  if (!window.firebase?.messaging) {
-    console.warn("Firebase Messaging SDK is not loaded yet.");
-    return;
-  }
-
-  try {
-    const permission = await Notification.requestPermission();
-
-    if (permission !== "granted") {
-      console.log("Notification permission was not granted.");
-      return;
-    }
-
-    const registration = await navigator.serviceWorker.ready;
-
-    if (!firebaseApp) {
-      firebaseApp = firebase.initializeApp({
-        apiKey: "BKZdm7O3p9NQYqNmGcIRtFYRpoaWo5CPkSDGFIsY7mAEKeoFLwuE6tAyhVf0dbwaWZCirO_8vguTKrVPn76L7dU",
-        authDomain: "jehuapp-b8928.firebaseapp.com",
-        projectId: "jehuapp-b8928",
-        storageBucket: "jehuapp-b8928.firebasestorage.app",
-        messagingSenderId: "1087051550482",
-        appId: "1:1087051550482:web:b2f5bed91d9b4c1d5e6dcb"
-      });
-      firebaseMessaging = firebase.messaging(firebaseApp);
-    }
-
-    const token = await firebaseMessaging.getToken({
-      vapidKey: FIREBASE_VAPID_KEY,
-      serviceWorkerRegistration: registration
-    });
-
-    if (!token) {
-      console.warn("Firebase did not return a device token.");
-      return;
-    }
-
-    const { error } = await db.from("jehu_push_tokens").upsert({
-      user_id: userId,
-      token,
-      updated_at: new Date().toISOString()
-    }, { onConflict: "token" });
-
-    if (error) throw error;
-
-    console.log("JehuApp notification device registered.");
-  } catch (error) {
-    console.error("Push registration error:", error);
-  }
-}
-
-
-
-
 async function start(u){
  user=u;
  savedUser=u;
@@ -665,7 +597,6 @@ async function start(u){
  $("profileEmail").value=u.email||"";
  $("userId").textContent=u.id;
  await ensureProfile();
- await registerJehuPush(u.id);
  go("home");
  await Promise.all([loadPosts(),loadProducts(),loadRecentChats()]);
 }
@@ -1230,80 +1161,6 @@ let earlyCallCandidates=[];
 let callMuted=false;
 let cameraOff=false;
 
-
-
-// JehuApp original WhatsApp-style call tones
-let jehuAudioContext = null;
-let jehuRingtoneTimer = null;
-
-async function startJehuRingtone(type) {
- stopJehuRingtone();
-
- const Audio = window.AudioContext || window.webkitAudioContext;
- if (!Audio) return;
-
- try {
-  if (!jehuAudioContext) {
-   jehuAudioContext = new Audio();
-  }
-
-  await jehuAudioContext.resume();
-
-  function tone(start, duration, frequencies) {
-   const ctx = jehuAudioContext;
-
-   frequencies.forEach(freq => {
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    oscillator.type = "sine";
-    oscillator.frequency.value = freq;
-
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.linearRampToValueAtTime(0.055, start + 0.04);
-    gain.gain.setValueAtTime(0.055, start + duration - 0.04);
-    gain.gain.linearRampToValueAtTime(0.0001, start + duration);
-
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-
-    oscillator.start(start);
-    oscillator.stop(start + duration);
-   });
-  }
-
-  function playPattern() {
-   const now = jehuAudioContext.currentTime;
-
-   if (type === "incoming") {
-    tone(now, 0.32, [440, 480]);
-    tone(now + 0.48, 0.32, [440, 480]);
-   } else {
-    tone(now, 1.5, [440, 480]);
-   }
-  }
-
-  playPattern();
-
-  jehuRingtoneTimer = setInterval(
-   playPattern,
-   type === "incoming" ? 2400 : 5000
-  );
-
- } catch (error) {
-  console.warn("JehuApp ringtone:", error);
- }
-}
-
-function stopJehuRingtone() {
- if (jehuRingtoneTimer) {
-  clearInterval(jehuRingtoneTimer);
-  jehuRingtoneTimer = null;
- }
-}
-
-
-
 function callTopicForCurrentChat(){
  if(!user||!peer)throw new Error("Open a conversation first.");
  return "jehu-call:"+[user.id,peer.id].sort().join(":");
@@ -1470,14 +1327,8 @@ async function startVideoCall(){
   const offer=await rtcPeer.createOffer();
   await rtcPeer.setLocalDescription(offer);
   const description={type:rtcPeer.localDescription.type,sdp:rtcPeer.localDescription.sdp};
-  
-
-await sendCallSignal("offer",{description});
-await startJehuRingtone("outgoing");
-setCallStatus("Calling "+peer.name+". Waiting for answer...");
-
-
-
+  await sendCallSignal("offer",{description});
+  setCallStatus("Calling "+peer.name+". Waiting for answer...");
  }catch(err){
   alert("Could not start the video call: "+err.message);
   await closeVideoCall();
@@ -1512,26 +1363,16 @@ async function handleCallSignal(data){
   earlyCallCandidates=[];
   $("callHeading").textContent="Incoming video call";
   $("remoteCallLabel").textContent=peer.name;
-  
-
-showCall();
-showIncomingControls();
-startJehuRingtone("incoming");
-setCallStatus(peer.name+" is calling you.");
-
-
+  showCall();
+  showIncomingControls();
+  setCallStatus(peer.name+" is calling you.");
   return;
  }
 
  if(data.callId!==callId)return;
 
- 
-if(data.type==="answer"){
-  stopJehuRingtone();
+ if(data.type==="answer"){
   if(!rtcPeer)return;
-
-
-
   await rtcPeer.setRemoteDescription(new RTCSessionDescription(data.description));
   await flushCallCandidates();
   setCallStatus("The other person answered. Connecting...");
@@ -1555,8 +1396,6 @@ if(data.type==="answer"){
 }
 
 async function acceptIncomingCall(){
-stopJehuRingtone();
-
  if(!incomingOffer||!callId)return;
  try{
   setCallStatus("Opening your camera and microphone...");
@@ -1595,11 +1434,7 @@ async function endVideoCall(){
  await closeVideoCall();
 }
 
-
-
 async function closeVideoCall(){
- stopJehuRingtone();
-
  if(rtcPeer){
   rtcPeer.ontrack=null;
   rtcPeer.onicecandidate=null;
@@ -1629,9 +1464,6 @@ async function closeVideoCall(){
  $("activeCallButtons").classList.add("hidden");
  hideCall();
 }
-
-
-
 
 function toggleCallMute(button){
  if(!localCallStream)return;
