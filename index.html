@@ -1133,8 +1133,20 @@ async function openChat(){
  }
 }
 
+
+
+
+
+
+
+
+
+
 function showSelectedChat(){
- selectedBubbleColor=localStorage.getItem(bubbleColorKey())||"#075b46";
+ if(!user || !peer) return;
+
+ selectedBubbleColor=
+  localStorage.getItem(bubbleColorKey()) || "#075b46";
 
  $("chatTitle").textContent=peer.name;
  $("chatAvatar").textContent=initials(peer.name);
@@ -1142,7 +1154,15 @@ function showSelectedChat(){
  $("chatStatus").textContent="Chat opened.";
 
  renderContacts();
+
+ // Connect to the selected person's call channel
+ connectCallChannel().catch(error=>{
+  console.error("Call channel connection failed:",error);
+ });
 }
+
+
+
 
 
 
@@ -1576,7 +1596,19 @@ async function saveOfflineMessages(messages){
  try{
   const database=await openJehuOfflineDB();
 
+
+
+
+
+
+
+
   await new Promise((resolve,reject)=>{
+
+
+
+
+
    const tx=database.transaction("messages","readwrite");
    const store=tx.objectStore("messages");
 
@@ -1674,8 +1706,15 @@ async function loadMessages(){
 
  try{
   const saved=await getOfflineMessages();
-  cachedMessages=saved.filter(isThisChat);
-  data=[...cachedMessages];
+  
+cachedMessages=saved.filter(message=>
+ message.ownerId===user.id &&
+ isThisChat(message)
+);
+
+data=[...cachedMessages];
+
+
  }catch(error){
   console.error("Could not read saved chat:",error);
  }
@@ -2233,7 +2272,20 @@ async function connectCallChannel(){
     setCallStatus("Call connection problem: "+err.message);
    });
   });
+
+console.log("CALL TOPIC:",topic);
+console.log("USER ID:",user?.id);
+console.log("PEER ID:",peer?.id);
+console.log("CHANNEL CREATED:",!!channel);
+
+
+
+
   await new Promise((resolve,reject)=>{
+
+
+
+
    let settled=false;
    const timeout=setTimeout(()=>{
     if(!settled){
@@ -2265,16 +2317,60 @@ async function connectCallChannel(){
  }
 }
 
+
+
+
+
+
+
+
 async function sendCallSignal(type,extra={}){
- await connectCallChannel();
- if(!callId)throw new Error("The call session has ended.");
+
+ if(!callChannel){
+  await connectCallChannel();
+ }
+
+ if(!callChannel){
+  throw new Error("JehuApp call channel is not connected.");
+ }
+
+ if(!callId){
+  throw new Error("The call session has ended.");
+ }
+
+ if(!user?.id||!peer?.id){
+  throw new Error("Missing user or recipient ID.");
+ }
+
  const result=await callChannel.send({
   type:"broadcast",
   event:"call-signal",
-  payload:{type,from:user.id,to:peer.id,callId,...extra}
+  payload:{
+   type,
+   from:user.id,
+   to:peer.id,
+   callId,
+   ...extra
+  }
  });
- if(result!=="ok")throw new Error("The call signal could not be sent.");
+
+ console.log("SUPABASE CALL SIGNAL RESULT:",result);
+
+ if(result!=="ok"){
+  throw new Error(
+   "Supabase could not send the call signal. Result: "+result
+  );
+ }
+
+ return true;
 }
+
+
+
+
+
+
+
 
 function setCallStatus(message){
  $("callStatusText").textContent=message;
