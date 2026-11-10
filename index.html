@@ -2293,17 +2293,36 @@ console.log("CHANNEL CREATED:",!!channel);
      reject(new Error("Timed out connecting to JehuApp call service."));
     }
    },15000);
-   channel.subscribe((status,error)=>{
-    if(status==="SUBSCRIBED"&&!settled){
-     settled=true;
-     clearTimeout(timeout);
-     resolve();
-    }else if(["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(status)&&!settled){
-     settled=true;
-     clearTimeout(timeout);
-     reject(error||new Error("Could not connect to the private call channel ("+status+"). Check the Supabase Realtime policies."));
-    }
-   });
+   
+
+
+
+channel.subscribe((status,error)=>{
+
+ console.log("JEHU REALTIME STATUS:",status);
+ console.log("JEHU REALTIME ERROR:",error);
+
+ if(status==="SUBSCRIBED"&&!settled){
+  settled=true;
+  clearTimeout(timeout);
+  console.log("JEHU CALL CHANNEL CONNECTED!");
+  resolve();
+
+ }else if(
+  ["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(status)
+  &&!settled
+ ){
+  settled=true;
+  clearTimeout(timeout);
+  reject(error||new Error(
+   "Call channel failed with status: "+status
+  ));
+ }
+});
+
+
+
+
   });
   callChannel=channel;
   callChannelTopic=topic;
