@@ -2411,28 +2411,78 @@ function showActiveCallControls(){
 
 /* Corrected camera and microphone setup */
 async function createCallPeer(){
+
  if(!navigator.mediaDevices?.getUserMedia){
-  throw new Error("Camera and microphone access needs HTTPS and a supported browser.");
+  throw new Error(
+   "Camera access is unavailable. Open JehuApp using HTTPS in a supported browser."
+  );
  }
 
- localCallStream=await navigator.mediaDevices.getUserMedia({
-  audio:true,
-  video:{
-   facingMode:"user",
-   width:{ideal:1280},
-   height:{ideal:720}
+ // Check available devices
+ let devices=[];
+
+ try{
+  devices=await navigator.mediaDevices.enumerateDevices();
+ }catch(error){
+  console.warn("Could not list devices:",error);
+ }
+
+ console.log("AVAILABLE MEDIA DEVICES:",devices);
+
+ const cameras=devices.filter(d=>d.kind==="videoinput");
+ const microphones=devices.filter(d=>d.kind==="audioinput");
+
+ console.log("CAMERAS:",cameras.length);
+ console.log("MICROPHONES:",microphones.length);
+
+ if(!cameras.length){
+  throw new Error("No camera detected. Check your camera connection and Chrome permissions.");
+ }
+
+ if(!microphones.length){
+  throw new Error("No microphone detected. Check your microphone connection and Chrome permissions.");
+ }
+
+ // Request camera and microphone
+ try{
+  localCallStream=await navigator.mediaDevices.getUserMedia({
+   audio:true,
+   video:true
+  });
+ }catch(error){
+  console.error("MEDIA DEVICE ERROR:",error);
+
+  if(error.name==="NotFoundError"){
+   throw new Error("Camera or microphone not found.");
   }
- });
+
+  if(error.name==="NotAllowedError"){
+   throw new Error("Camera or microphone permission was denied.");
+  }
+
+  if(error.name==="NotReadableError"){
+   throw new Error("Camera or microphone is busy or cannot be accessed.");
+  }
+
+  throw error;
+ }
 
  $("localCallVideo").srcObject=localCallStream;
+ $("localCallVideo").muted=true;
+ $("localCallVideo").play().catch(()=>{});
+
  remoteCallStream=new MediaStream();
  $("remoteCallVideo").srcObject=remoteCallStream;
 
  rtcPeer=new RTCPeerConnection({
-  iceServers:[{urls:"stun:stun.l.google.com:19302"}]
+  iceServers:[
+   {urls:"stun:stun.l.google.com:19302"}
+  ]
  });
 
- localCallStream.getTracks().forEach(track=>rtcPeer.addTrack(track,localCallStream));
+ localCallStream.getTracks().forEach(track=>{
+  rtcPeer.addTrack(track,localCallStream);
+ });
 
  rtcPeer.ontrack=event=>{
   if(event.streams&&event.streams[0]){
@@ -2441,26 +2491,45 @@ async function createCallPeer(){
    remoteCallStream.addTrack(event.track);
    $("remoteCallVideo").srcObject=remoteCallStream;
   }
+
   $("remoteCallVideo").play().catch(()=>{});
  };
 
  rtcPeer.onicecandidate=event=>{
   if(event.candidate&&callId){
-   sendCallSignal("candidate",{candidate:event.candidate.toJSON()}).catch(err=>console.warn(err));
+   sendCallSignal("candidate",{
+    candidate:event.candidate.toJSON()
+   }).catch(err=>console.warn(err));
   }
  };
 
  rtcPeer.onconnectionstatechange=()=>{
   if(!rtcPeer)return;
+
   const state=rtcPeer.connectionState;
-  if(state==="connected")setCallStatus("Connected — you are now on a video call.");
-  else if(state==="connecting")setCallStatus("Connecting video and audio...");
-  else if(state==="disconnected")setCallStatus("Connection interrupted. Trying to reconnect...");
-  else if(state==="failed")setCallStatus("Connection failed. End the call and try again.");
+
+  if(state==="connected"){
+   setCallStatus("Connected — you are now on a video call.");
+  }else if(state==="connecting"){
+   setCallStatus("Connecting video and audio...");
+  }else if(state==="disconnected"){
+   setCallStatus("Connection interrupted. Trying to reconnect...");
+  }else if(state==="failed"){
+   setCallStatus("Connection failed. End the call and try again.");
+  }
  };
 
  return rtcPeer;
 }
+
+
+
+
+
+
+
+
+
 
 async function flushCallCandidates(){
  if(!rtcPeer||!rtcPeer.remoteDescription)return;
