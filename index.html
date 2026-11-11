@@ -498,6 +498,112 @@ button:disabled {
   color: white;
 }
 
+
+
+
+
+
+/* Jehu AI writing area improvement */
+#page-ai .ai-workspace {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#page-ai .ai-messages {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+#page-ai #aiForm.ai-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  background: #102b3b;
+}
+
+#page-ai #aiInput {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  max-height: 160px;
+  box-sizing: border-box;
+  padding: 15px;
+  border: 1px solid #315668;
+  border-radius: 14px;
+  background: #071a25;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+#page-ai #aiInput:focus {
+  border-color: #00d9a0;
+  box-shadow: 0 0 0 2px #00d9a022;
+}
+
+#page-ai .ai-attach {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #315668;
+  border-radius: 12px;
+  background: #17394a;
+  color: white;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+#page-ai .ai-send {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+
+#page-ai .ai-attachment-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #102b3b;
+}
+
+@media(max-width:600px) {
+  #page-ai #aiForm.ai-compose {
+    gap: 7px;
+    padding: 9px 5px;
+  }
+
+  #page-ai #aiInput {
+    min-height: 54px;
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  #page-ai .ai-attach,
+  #page-ai .ai-send {
+    flex-basis: 42px;
+    width: 42px;
+    height: 46px;
+  }
+}
+
+
+
+
 </style>
 </head>
 
