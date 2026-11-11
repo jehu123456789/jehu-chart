@@ -3622,6 +3622,44 @@ async function prepareJehuAIMedia(file) {
 
 
 
+function getJehuAIDemoReply(message, hasAttachment) {
+  const text = message.toLowerCase();
+
+  if (hasAttachment) {
+    return "I'm Jehu AI Demo Mode. I can receive your message, but image and video analysis requires an active AI service. You can still describe the attachment and I'll help with your description.";
+  }
+
+  if (/\b(hi|hello|hey)\b/.test(text)) {
+    return "Hello! Welcome to Jehu AI. How can I help you today?";
+  }
+
+  if (text.includes("your name")) {
+    return "My name is Jehu AI, your assistant inside JehuApp.";
+  }
+
+  if (text.includes("who created") || text.includes("who made")) {
+    return "Jehu AI is part of JehuApp, a social and communication platform.";
+  }
+
+  if (text.includes("jehuapp")) {
+    return "JehuApp is designed to help people connect, share and discover. What would you like to know about it?";
+  }
+
+  if (text.includes("help")) {
+    return "I'm here to help! Ask me about learning, writing, programming or general knowledge.";
+  }
+
+  if (text.includes("thank")) {
+    return "You're welcome! I'm glad to help.";
+  }
+
+  if (text.includes("time")) {
+    return "I don't have access to a live clock in Demo Mode.";
+  }
+
+  return "I'm currently running in Jehu AI Demo Mode. I can demonstrate the chat interface, but I don't have access to a live AI model right now. Your message has been saved. For intelligent answers, an active AI service is required.";
+}
+
 
 
 
@@ -3691,25 +3729,25 @@ async function sendJehuAIMessage(event) {
 
     if (historyError) throw historyError;
 
-    $("aiStatus").textContent = "Jehu AI is analysing your attachment...";
+  
 
-    const { data, error } = await db.functions.invoke("jehu-ai", {
-      body: {
-        messages: (history || []).map(m => ({
-          role: m.role,
-          content: m.content
-        })),
-        attachments
-      }
-    });
 
-    if (error) throw error;
 
-    const answer = String(data?.answer || "").trim();
+$("aiStatus").textContent = "Jehu AI is thinking...";
 
-    if (!answer) {
-      throw new Error("Jehu AI returned an empty answer.");
-    }
+const answer = getJehuAIDemoReply(
+  text,
+  attachments.length > 0
+);
+
+if (!answer) {
+  throw new Error("Jehu AI returned an empty answer.");
+}
+
+
+
+
+
 
     const { error: answerError } = await db
       .from("jehu_ai_messages")
