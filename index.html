@@ -4260,6 +4260,14 @@ function getJehuAIDemoReply(message, hasAttachment) {
 
 
 
+
+
+
+
+
+
+
+
 async function sendJehuAIMessage(event) {
   event.preventDefault();
 
@@ -4305,6 +4313,7 @@ async function sendJehuAIMessage(event) {
     addJehuAIMessage("user", displayText);
     input.value = "";
 
+    // SAVE USER MESSAGE
     const { error: saveError } = await db
       .from("jehu_ai_messages")
       .insert({
@@ -4316,6 +4325,7 @@ async function sendJehuAIMessage(event) {
 
     if (saveError) throw saveError;
 
+    // LOAD CONVERSATION HISTORY
     const { data: history, error: historyError } = await db
       .from("jehu_ai_messages")
       .select("role,content")
@@ -4326,26 +4336,43 @@ async function sendJehuAIMessage(event) {
 
     if (historyError) throw historyError;
 
-  
+    $("aiStatus").textContent =
+      "Jehu AI Brain is retrieving memories...";
 
+    // CALL THE REAL JEHU AI EDGE FUNCTION
+    const { data, error } = await db.functions.invoke(
+      "jehu-ai",
+      {
+        body: {
+          messages: history,
+          attachments
+        }
+      }
+    );
 
+    if (error) {
+      let detail = error.message || "AI service failed.";
 
-$("aiStatus").textContent = "Jehu AI is thinking...";
+      try {
+        if (error.context instanceof Response) {
+          const response = await error.context.clone();
+          const result = await response.json();
+          if (result?.error) detail = result.error;
+        }
+      } catch (_) {}
 
-const answer = getJehuAIDemoReply(
-  text,
-  attachments.length > 0
-);
+      throw new Error(detail);
+    }
 
-if (!answer) {
-  throw new Error("Jehu AI returned an empty answer.");
-}
+    if (!data?.answer) {
+      throw new Error(
+        data?.error || "Jehu AI returned an empty answer."
+      );
+    }
 
+    const answer = data.answer;
 
-
-
-
-
+    // SAVE AI RESPONSE
     const { error: answerError } = await db
       .from("jehu_ai_messages")
       .insert({
@@ -4359,37 +4386,24 @@ if (!answer) {
 
     addJehuAIMessage("assistant", answer);
 
+    // CLEAN UP ATTACHMENT
     jehuAISelectedFile = null;
     $("aiAttachmentInput").value = "";
     $("aiAttachmentPreview").replaceChildren();
-    $("aiStatus").textContent = "";
+
+    $("aiStatus").textContent =
+      `Jehu AI replied. Memories used: ${data.memoryUsed ?? 0}`;
 
     await loadJehuAIHistory();
 
   } catch (error) {
-    console.error("Jehu AI attachment error:", error);
+    console.error("Jehu AI error:", error);
 
-    let detail = error?.message || "Please try again.";
+    $("aiStatus").textContent =
+      "Jehu AI error: " +
+      (error?.message || "Please try again.");
 
-    // Read the actual error returned by the Edge Function
-    try {
-        if (error?.context instanceof Response) {
-            const response = await error.context.clone();
-            const result = await response.json();
-
-            if (result?.error) {
-                detail = result.error;
-            }
-        }
-    } catch (readError) {
-        console.warn("Could not read server error:", readError);
-    }
-
-    $("aiStatus").textContent = "Jehu AI error: " + detail;
-
-} finally {
-
-  
+  } finally {
     jehuAISending = false;
     $("aiSendButton").disabled = false;
     input.disabled = false;
@@ -4397,6 +4411,11 @@ if (!answer) {
     input.focus();
   }
 }
+
+
+
+
+
 
 
 
