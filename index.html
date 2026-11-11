@@ -422,6 +422,82 @@ button:disabled {
 }
 
 
+/* JEHU AI MEDIA ATTACHMENTS */
+.ai-attach {
+  width: 48px;
+  min-width: 48px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #17394a;
+  border: 1px solid #315668;
+  cursor: pointer;
+  font-size: 23px;
+}
+
+.ai-attach:hover {
+  background: #24536a;
+}
+
+.ai-attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: #102b3b;
+  color: #dcecf3;
+  font-size: 13px;
+}
+
+.ai-attachment-preview:empty {
+  display: none;
+}
+
+.ai-attachment-preview button {
+  padding: 5px 10px;
+  background: #713b48;
+  color: white;
+}
+
+/* JEHU AI MEDIA ATTACHMENTS */
+.ai-attach {
+  width: 48px;
+  min-width: 48px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #17394a;
+  border: 1px solid #315668;
+  cursor: pointer;
+  font-size: 23px;
+}
+
+.ai-attach:hover {
+  background: #24536a;
+}
+
+.ai-attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: #102b3b;
+  color: #dcecf3;
+  font-size: 13px;
+}
+
+.ai-attachment-preview:empty {
+  display: none;
+}
+
+.ai-attachment-preview button {
+  padding: 5px 10px;
+  background: #713b48;
+  color: white;
+}
+
 </style>
 </head>
 
@@ -744,18 +820,30 @@ button:disabled {
 
       <div id="aiStatus" class="muted" style="padding:8px 12px"></div>
 
-      <form id="aiForm" class="ai-compose">
-        <textarea
-          id="aiInput"
-          maxlength="6000"
-          placeholder="Ask Jehu AI anything..."
-          required
-        ></textarea>
+    <div id="aiAttachmentPreview" class="ai-attachment-preview"></div>
 
-        <button id="aiSendButton" type="submit">
-          SEND
-        </button>
-      </form>
+<form id="aiForm" class="ai-compose">
+  <label class="ai-attach" title="Attach an image or video">
+    📎
+    <input
+      id="aiAttachmentInput"
+      type="file"
+      accept="image/*,video/mp4,video/webm,video/quicktime"
+      hidden
+    >
+  </label>
+
+  <textarea
+    id="aiInput"
+    maxlength="6000"
+    rows="2"
+    placeholder="Message Jehu AI..."
+    aria-label="Message Jehu AI"
+  ></textarea>
+
+  <button id="aiSendButton" class="primary ai-send"
+    type="submit" aria-label="Send to Jehu AI">➤</button>
+</form>
 
     </div>
   </div>
@@ -3215,6 +3303,149 @@ async function openJehuAIConversation(id) {
     addJehuAIMessage(item.role, item.content);
   }
 }
+  
+
+/* JEHU AI IMAGE AND VIDEO ATTACHMENTS */
+
+let jehuAISelectedFile = null;
+
+const aiAttachmentInput = $("aiAttachmentInput");
+
+aiAttachmentInput.addEventListener("change", () => {
+  const file = aiAttachmentInput.files?.[0];
+
+  if (!file) return;
+
+  if (file.size > 50 * 1024 * 1024) {
+    $("aiStatus").textContent = "Please choose a file smaller than 50 MB.";
+    aiAttachmentInput.value = "";
+    return;
+  }
+
+  if (!file.type.startsWith("image/") &&
+      !file.type.startsWith("video/")) {
+    $("aiStatus").textContent = "Choose an image or video.";
+    aiAttachmentInput.value = "";
+    return;
+  }
+
+  jehuAISelectedFile = file;
+
+  const preview = $("aiAttachmentPreview");
+  preview.replaceChildren();
+
+  const name = document.createElement("span");
+  name.textContent =
+    (file.type.startsWith("video/") ? "🎬 " : "🖼️ ") + file.name;
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.textContent = "Remove";
+
+  remove.onclick = () => {
+    jehuAISelectedFile = null;
+    aiAttachmentInput.value = "";
+    preview.replaceChildren();
+    $("aiStatus").textContent = "";
+  };
+
+  preview.append(name, remove);
+  $("aiStatus").textContent = "Attachment ready. Add a question or press SEND.";
+});
+
+
+function aiCanvasDataURL(source, width, height) {
+  const scale = Math.min(1, 960 / Math.max(width, height));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+  return canvas.toDataURL("image/jpeg", 0.62);
+}
+
+
+async function prepareJehuAIMedia(file) {
+  if (file.type.startsWith("image/")) {
+    const bitmap = await createImageBitmap(file);
+
+    try {
+      return [{
+        dataUrl: aiCanvasDataURL(
+          bitmap, bitmap.width, bitmap.height
+        )
+      }];
+    } finally {
+      bitmap.close();
+    }
+  }
+
+  if (file.type.startsWith("video/")) {
+    const video = document.createElement("video");
+    const url = URL.createObjectURL(file);
+
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    video.src = url;
+
+    try {
+      await new Promise((resolve, reject) => {
+        video.onloadedmetadata = resolve;
+        video.onerror = () =>
+          reject(new Error("Could not open this video."));
+      });
+
+      if (!Number.isFinite(video.duration) || video.duration <= 0) {
+        throw new Error("This video could not be read.");
+      }
+
+      const duration = video.duration;
+
+      const times = [
+        Math.min(0.1, duration / 4),
+        duration / 2,
+        Math.max(0, duration - 0.1)
+      ];
+
+      const uniqueTimes = [...new Set(times)];
+      const frames = [];
+
+      for (const time of uniqueTimes) {
+        await new Promise((resolve, reject) => {
+          video.onseeked = resolve;
+          video.onerror = reject;
+          video.currentTime = time;
+        });
+
+        frames.push({
+          dataUrl: aiCanvasDataURL(
+            video, video.videoWidth, video.videoHeight
+          )
+        });
+      }
+
+      return frames;
+
+    } finally {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  throw new Error("Unsupported attachment.");
+}
+
+
+
+
+
+
 
 async function sendJehuAIMessage(event) {
   event.preventDefault();
@@ -3227,25 +3458,39 @@ async function sendJehuAIMessage(event) {
   }
 
   const input = $("aiInput");
-  const message = input.value.trim();
+  const file = jehuAISelectedFile;
 
-  if (!message) return;
+  const text = input.value.trim() ||
+    (file?.type.startsWith("video/")
+      ? "Please analyse this video."
+      : "Please analyse this image.");
 
-  if (!jehuAIConversationId) {
-    newJehuAIChat();
-  }
+  if (!input.value.trim() && !file) return;
+
+  if (!jehuAIConversationId) newJehuAIChat();
 
   jehuAISending = true;
   $("aiSendButton").disabled = true;
   input.disabled = true;
+  $("aiAttachmentInput").disabled = true;
 
-  addJehuAIMessage("user", message);
-  input.value = "";
-
-  $("aiStatus").textContent = "Jehu AI is thinking...";
+  $("aiStatus").textContent = "Preparing your message...";
 
   try {
     const conversationId = jehuAIConversationId;
+
+    let attachments = [];
+
+    if (file) {
+      attachments = await prepareJehuAIMedia(file);
+    }
+
+    const displayText = file
+      ? text + "\n📎 " + file.name
+      : text;
+
+    addJehuAIMessage("user", displayText);
+    input.value = "";
 
     const { error: saveError } = await db
       .from("jehu_ai_messages")
@@ -3253,33 +3498,38 @@ async function sendJehuAIMessage(event) {
         user_id: user.id,
         conversation_id: conversationId,
         role: "user",
-        content: message
+        content: displayText
       });
 
     if (saveError) throw saveError;
 
     const { data: history, error: historyError } = await db
       .from("jehu_ai_messages")
-      .select("role, content")
+      .select("role,content")
       .eq("user_id", user.id)
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
-      .limit(20);
+      .limit(30);
 
     if (historyError) throw historyError;
 
+    $("aiStatus").textContent = "Jehu AI is analysing your attachment...";
+
     const { data, error } = await db.functions.invoke("jehu-ai", {
       body: {
-        messages: (history || []).map(item => ({
-          role: item.role,
-          content: item.content
-        }))
+        messages: (history || []).map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        attachments
       }
     });
 
     if (error) throw error;
 
-    if (!data?.answer) {
+    const answer = String(data?.answer || "").trim();
+
+    if (!answer) {
       throw new Error("Jehu AI returned an empty answer.");
     }
 
@@ -3289,30 +3539,43 @@ async function sendJehuAIMessage(event) {
         user_id: user.id,
         conversation_id: conversationId,
         role: "assistant",
-        content: data.answer
+        content: answer
       });
 
     if (answerError) throw answerError;
 
-    addJehuAIMessage("assistant", data.answer);
+    addJehuAIMessage("assistant", answer);
 
+    jehuAISelectedFile = null;
+    $("aiAttachmentInput").value = "";
+    $("aiAttachmentPreview").replaceChildren();
     $("aiStatus").textContent = "";
 
     await loadJehuAIHistory();
 
   } catch (error) {
-    console.error("Jehu AI error:", error);
+    console.error("Jehu AI attachment error:", error);
 
     $("aiStatus").textContent =
-      "AI error: " + (error.message || "Something went wrong.");
+      "Jehu AI error: " + (error.message || "Please try again.");
 
   } finally {
     jehuAISending = false;
     $("aiSendButton").disabled = false;
     input.disabled = false;
+    $("aiAttachmentInput").disabled = false;
     input.focus();
   }
 }
+
+
+
+
+
+
+
+
+
 
 $("aiForm").addEventListener("submit", sendJehuAIMessage);
 
