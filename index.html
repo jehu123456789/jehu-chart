@@ -997,6 +997,152 @@ background: rgba(4, 15, 32, 0.85);
 }
 
 
+
+
+
+/* FINAL JEHU AI BACKGROUND AND CHAT FIX */
+
+#page-ai {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #020817;
+}
+
+/* Put slideshow behind the chat */
+#page-ai > #jehuAISlideshow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#page-ai > #jehuAISlideshow img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  opacity: 1;
+  transition: opacity .8s ease;
+}
+
+/* Slight background shading */
+#page-ai::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(0, 8, 20, .20);
+  pointer-events: none;
+}
+
+/* Keep all chat content above the background */
+#page-ai > .hero,
+#page-ai > .ai-box {
+  position: relative;
+  z-index: 1;
+}
+
+#page-ai .ai-box {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  height: calc(100vh - 230px);
+  min-height: 500px;
+}
+
+#page-ai .ai-history {
+  background: rgba(4, 15, 32, .82) !important;
+  border: 1px solid #315668;
+  border-radius: 14px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+#page-ai .ai-chat {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: rgba(4, 15, 32, .78) !important;
+  border: 1px solid #36cfff;
+  border-radius: 14px;
+}
+
+#page-ai #aiMessages {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 100px;
+  max-height: none;
+  overflow-y: auto;
+  padding: 15px;
+  background: transparent !important;
+}
+
+#page-ai #aiForm.ai-compose {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 78px;
+  padding: 12px;
+  background: #102b3b !important;
+  border-top: 1px solid #36cfff;
+}
+
+#page-ai #aiInput {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  flex: 1 1 auto !important;
+  width: 100%;
+  min-width: 0;
+  height: 55px !important;
+  min-height: 55px !important;
+  margin: 0;
+  padding: 14px;
+  color: white !important;
+  background: #071a25 !important;
+  border: 1px solid #36cfff !important;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+#page-ai .ai-attach,
+#page-ai .ai-send {
+  display: flex !important;
+  flex: 0 0 48px !important;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+}
+
+@media(max-width:700px) {
+  #page-ai .ai-box {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 75vh;
+  }
+
+  #page-ai .ai-chat {
+    height: 70vh;
+    min-height: 480px;
+  }
+
+  #page-ai .ai-history {
+    order: 2;
+  }
+}
+
+
 </style>
 </head>
 
@@ -1285,25 +1431,42 @@ background: rgba(4, 15, 32, 0.85);
 
 
 
+
+
+
+
 <section class="page hidden" id="page-ai">
 
+  <!-- Background slideshow -->
+  <div id="jehuAISlideshow" class="jehu-ai-slideshow">
+    <img
+      id="jehuAISlideImage"
+      src="./jehu-ai-1.jpg"
+      alt="Jehu AI background"
+    >
+  </div>
+
+  <!-- Page heading -->
   <div class="hero">
     <h1>Welcome to <span>Jehu AI</span></h1>
     <p>Your personal AI assistant inside JehuApp.</p>
   </div>
 
+  <!-- Chat workspace -->
   <div class="ai-box">
 
+    <!-- Conversation history -->
     <div class="ai-history">
       <h3>AI Conversations</h3>
 
-      <button onclick="newJehuAIChat()">
+      <button type="button" onclick="newJehuAIChat()">
         ＋ New conversation
       </button>
 
       <div id="aiHistoryList"></div>
     </div>
 
+    <!-- Main chat -->
     <div class="ai-chat">
 
       <div style="padding:15px;border-bottom:1px solid #254657">
@@ -1311,18 +1474,7 @@ background: rgba(4, 15, 32, 0.85);
         <small class="muted">Ask questions, learn, write and code.</small>
       </div>
 
-
-
-</div>
-<div id="jehuAISlideshow" class="jehu-ai-slideshow">
-  <img
-    id="jehuAISlideImage"
-    src="./jehu-ai-1.jpg"
-    alt="Jehu AI background"
-  >
-</div>
-
-
+      <!-- Messages -->
       <div id="aiMessages" class="ai-messages">
         <div class="ai-message assistant">
           Hello! I am Jehu AI. What would you like to learn or create today?
@@ -1331,34 +1483,51 @@ background: rgba(4, 15, 32, 0.85);
 
       <div id="aiStatus" class="muted" style="padding:8px 12px"></div>
 
-    <div id="aiAttachmentPreview" class="ai-attachment-preview"></div>
+      <!-- Attachment preview -->
+      <div id="aiAttachmentPreview" class="ai-attachment-preview"></div>
 
-<form id="aiForm" class="ai-compose">
-  <label class="ai-attach" title="Attach an image or video">
-    📎
-    <input
-      id="aiAttachmentInput"
-      type="file"
-      accept="image/*,video/mp4,video/webm,video/quicktime"
-      hidden
-    >
-  </label>
+      <!-- Writing box -->
+      <form id="aiForm" class="ai-compose">
 
-  <textarea
-    id="aiInput"
-    maxlength="6000"
-    rows="2"
-    placeholder="Message Jehu AI..."
-    aria-label="Message Jehu AI"
-  ></textarea>
+        <label class="ai-attach" title="Attach an image or video">
+          📎
+          <input
+            id="aiAttachmentInput"
+            type="file"
+            accept="image/*,video/mp4,video/webm,video/quicktime"
+            hidden
+          >
+        </label>
 
-  <button id="aiSendButton" class="primary ai-send"
-    type="submit" aria-label="Send to Jehu AI">➤</button>
-</form>
+        <textarea
+          id="aiInput"
+          maxlength="6000"
+          rows="2"
+          placeholder="Message Jehu AI..."
+          aria-label="Message Jehu AI"
+        ></textarea>
+
+        <button
+          id="aiSendButton"
+          class="primary ai-send"
+          type="submit"
+          aria-label="Send to Jehu AI"
+        >➤</button>
+
+      </form>
 
     </div>
   </div>
 </section>
+
+
+
+
+
+
+
+
+
 
 
 
