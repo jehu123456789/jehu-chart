@@ -276,13 +276,101 @@ button:disabled {
 
 
 
-/* JEHU AI FULL PAGE LAYOUT */
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* FULL PAGE JEHU AI BACKGROUND */
+
 #page-ai {
-  width: 100%;
-  min-height: calc(100vh - 100px);
-  padding: 15px;
-  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: #020817;
+  overflow: hidden;
 }
+
+#page-ai .jehu-ai-slideshow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+#page-ai .jehu-ai-slideshow img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+#page-ai::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(1, 7, 20, 0.48);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Keep page content above background */
+
+#page-ai > .hero,
+#page-ai > .ai-box {
+  position: relative;
+  z-index: 1;
+}
+
+/* Transparent glass chat panel */
+
+#page-ai .ai-chat {
+  background: rgba(4, 15, 32, 0.48);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(70, 210, 255, 0.35);
+}
+
+#page-ai .ai-history {
+  background: rgba(4, 15, 32, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#page-ai .ai-messages {
+  background: transparent;
+}
+
+#page-ai .ai-compose {
+  background: rgba(4, 15, 32, 0.85);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #page-ai .hero {
   margin-bottom: 15px;
@@ -331,7 +419,9 @@ button:disabled {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: #0a202c;
+background: rgba(4, 15, 32, 0.48);
+backdrop-filter: blur(8px);
+-webkit-backdrop-filter: blur(8px);
   border: 1px solid #254657;
   border-radius: 14px;
   overflow: hidden;
@@ -368,7 +458,12 @@ button:disabled {
   display: flex;
   gap: 8px;
   padding: 12px;
-  background: #102b3b;
+  
+background: rgba(4, 15, 32, 0.72);
+backdrop-filter: blur(8px);
+-webkit-backdrop-filter: blur(8px);
+
+
 }
 
 .ai-compose textarea {
@@ -445,7 +540,12 @@ button:disabled {
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
-  background: #102b3b;
+  
+
+background: rgba(4, 15, 32, 0.85);
+
+
+
   color: #dcecf3;
   font-size: 13px;
 }
@@ -1033,16 +1133,14 @@ button:disabled {
 
 
 
+</div>
 <div id="jehuAISlideshow" class="jehu-ai-slideshow">
   <img
     id="jehuAISlideImage"
     src="./jehu-ai-1.jpg"
-    alt="Jehu AI introduction"
+    alt="Jehu AI background"
   >
-  <div class="jehu-ai-slide-label">✦ Welcome to Jehu AI</div>
 </div>
-
-
 
 
       <div id="aiMessages" class="ai-messages">
