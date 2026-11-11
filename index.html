@@ -4348,30 +4348,7 @@ $("aiInput").addEventListener("keydown", event => {
 })();
 
 
-// JEHU AI CONTINUOUS SLIDESHOW
-(function startJehuAISlideshow() {
-  const slides = [
-    "./jehu-ai-1.jpg",
-    "./jehu-ai-2.jpg",
-    "./jehu-ai-3.jpg"
-  ];
 
-  let currentSlide = 0;
-  const image = document.getElementById("jehuAISlideImage");
-
-  if (!image) return;
-
-  setInterval(() => {
-    image.style.opacity = "0";
-
-    setTimeout(() => {
-      currentSlide = (currentSlide + 1) % slides.length;
-      image.src = slides[currentSlide];
-      image.style.opacity = "1";
-    }, 800);
-
-  }, 10000);
-})();
 </script>
 
 <script>
