@@ -816,6 +816,186 @@ background: rgba(4, 15, 32, 0.85);
 }
 
 
+/* =================================
+   JEHU AI FULL-PAGE BACKGROUND FIX
+================================= */
+
+#page-ai {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: #020817;
+}
+
+/* Full-page rotating background */
+#page-ai > .jehu-ai-slideshow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#page-ai .jehu-ai-slideshow img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  opacity: 1 !important;
+  filter: brightness(1.05) saturate(1.15);
+}
+
+/* Remove the dark overlay that fades the images */
+#page-ai::before {
+  content: none !important;
+}
+
+/* Keep the page content above the background */
+#page-ai > .hero,
+#page-ai > .ai-box {
+  position: relative;
+  z-index: 1;
+}
+
+/* =================================
+   CHAT PANEL
+================================= */
+
+#page-ai .ai-box {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  height: calc(100vh - 230px);
+  min-height: 500px;
+}
+
+#page-ai .ai-chat {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: rgba(3, 12, 28, 0.38) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(70, 210, 255, 0.5);
+  border-radius: 14px;
+}
+
+/* Chat messages */
+#page-ai #aiMessages {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 150px;
+  max-height: none;
+  overflow-y: auto;
+  padding: 15px;
+  background: transparent;
+}
+
+/* Conversation history */
+#page-ai .ai-history {
+  background: rgba(3, 12, 28, 0.72) !important;
+  border: 1px solid rgba(70, 210, 255, 0.4);
+  border-radius: 14px;
+  backdrop-filter: blur(5px);
+}
+
+/* =================================
+   VISIBLE WRITING BOX
+================================= */
+
+#page-ai #aiForm.ai-compose {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 9px;
+  width: 100%;
+  min-height: 78px;
+  padding: 12px;
+  box-sizing: border-box;
+  background: rgba(3, 15, 32, 0.96) !important;
+  border-top: 1px solid #36cfff;
+  position: relative;
+  z-index: 5;
+}
+
+#page-ai #aiInput {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 55px !important;
+  min-height: 55px !important;
+  max-height: 140px;
+  padding: 14px;
+  box-sizing: border-box;
+  color: white !important;
+  background: #071a2b !important;
+  border: 1px solid #36cfff !important;
+  border-radius: 12px;
+  font-size: 16px;
+  resize: vertical;
+}
+
+#page-ai #aiInput::placeholder {
+  color: #c1d9e9 !important;
+}
+
+#page-ai .ai-attach,
+#page-ai .ai-send {
+  display: flex !important;
+  flex: 0 0 48px !important;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+#page-ai #aiAttachmentPreview {
+  flex: 0 0 auto;
+}
+
+/* Mobile layout */
+@media(max-width:700px) {
+  #page-ai .ai-box {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 75vh;
+  }
+
+  #page-ai .ai-chat {
+    height: 70vh;
+    min-height: 480px;
+  }
+
+  #page-ai #aiForm.ai-compose {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  #page-ai #aiInput {
+    height: 52px !important;
+    min-height: 52px !important;
+  }
+
+  #page-ai .ai-attach,
+  #page-ai .ai-send {
+    flex-basis: 42px !important;
+    width: 42px;
+    height: 44px;
+  }
+}
+
 
 </style>
 </head>
@@ -3999,7 +4179,30 @@ $("aiInput").addEventListener("keydown", event => {
 })();
 
 
+// JEHU AI CONTINUOUS SLIDESHOW
+(function startJehuAISlideshow() {
+  const slides = [
+    "./jehu-ai-1.jpg",
+    "./jehu-ai-2.jpg",
+    "./jehu-ai-3.jpg"
+  ];
 
+  let currentSlide = 0;
+  const image = document.getElementById("jehuAISlideImage");
+
+  if (!image) return;
+
+  setInterval(() => {
+    image.style.opacity = "0";
+
+    setTimeout(() => {
+      currentSlide = (currentSlide + 1) % slides.length;
+      image.src = slides[currentSlide];
+      image.style.opacity = "1";
+    }, 800);
+
+  }, 10000);
+})();
 </script>
 
 <script>
