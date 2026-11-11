@@ -3662,10 +3662,27 @@ async function sendJehuAIMessage(event) {
   } catch (error) {
     console.error("Jehu AI attachment error:", error);
 
-    $("aiStatus").textContent =
-      "Jehu AI error: " + (error.message || "Please try again.");
+    let detail = error?.message || "Please try again.";
 
-  } finally {
+    // Read the actual error returned by the Edge Function
+    try {
+        if (error?.context instanceof Response) {
+            const response = await error.context.clone();
+            const result = await response.json();
+
+            if (result?.error) {
+                detail = result.error;
+            }
+        }
+    } catch (readError) {
+        console.warn("Could not read server error:", readError);
+    }
+
+    $("aiStatus").textContent = "Jehu AI error: " + detail;
+
+} finally {
+
+  
     jehuAISending = false;
     $("aiSendButton").disabled = false;
     input.disabled = false;
