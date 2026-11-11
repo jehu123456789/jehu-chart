@@ -602,7 +602,79 @@ button:disabled {
 }
 
 
+/* FIX JEHU AI CHAT WRITING BOX */
 
+#page-ai .ai-compose {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-height: 85px !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+    background: #102b3b !important;
+    overflow: visible !important;
+}
+
+#page-ai #aiInput {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex: 1 1 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 55px !important;
+    height: 55px !important;
+    padding: 14px !important;
+    box-sizing: border-box !important;
+    color: white !important;
+    background: #071a25 !important;
+    border: 1px solid #315668 !important;
+    border-radius: 12px !important;
+    font-size: 16px !important;
+    resize: vertical !important;
+}
+
+#page-ai #aiInput::placeholder {
+    color: #a9bdc9 !important;
+}
+
+#page-ai .ai-attach,
+#page-ai .ai-send {
+    flex: 0 0 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+
+#page-ai .ai-workspace {
+    min-width: 0 !important;
+    width: 100% !important;
+}
+
+@media(max-width:600px) {
+    #page-ai .ai-compose {
+        gap: 6px !important;
+        padding: 8px !important;
+    }
+
+    #page-ai #aiInput {
+        min-height: 50px !important;
+        height: 50px !important;
+        font-size: 16px !important;
+    }
+
+    #page-ai .ai-attach,
+    #page-ai .ai-send {
+        flex-basis: 42px !important;
+        width: 42px !important;
+        height: 44px !important;
+    }
+}
 
 </style>
 </head>
