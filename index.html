@@ -4444,6 +4444,131 @@ $("aiInput").addEventListener("keydown", event => {
 
 
 
+
+
+/* =================================
+   JEHU AI BRAIN CORE v1.0
+   ================================= */
+
+window.JehuBrain = {
+
+  async getUser() {
+    const { data, error } =
+      await client().auth.getUser();
+
+    if (error) throw error;
+    if (!data.user) {
+      throw new Error("Please log in first.");
+    }
+
+    return data.user;
+  },
+
+  // SAVE A MEMORY
+  async remember(content, type = "general") {
+    const user = await this.getUser();
+
+    const { data, error } = await client()
+      .from("jehu_ai_memory")
+      .insert({
+        user_id: user.id,
+        memory_type: type,
+        memory_content: content
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // RECALL STORED MEMORIES
+  async recall(query = "") {
+    const user = await this.getUser();
+
+    const { data, error } = await client()
+      .from("jehu_ai_memory")
+      .select("memory_type,memory_content,created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    if (!query.trim()) return data;
+
+    const words = query.toLowerCase().split(/\s+/);
+
+    return data
+      .map(memory => ({
+        ...memory,
+        score: words.filter(word =>
+          word.length > 2 &&
+          memory.memory_content.toLowerCase().includes(word)
+        ).length
+      }))
+      .filter(memory => memory.score > 0)
+      .sort((a, b) => b.score - a.score);
+  },
+
+  // SAVE CONVERSATIONS
+  async saveConversation(role, message) {
+    const user = await this.getUser();
+
+    const { error } = await client()
+      .from("jehu_ai_conversations")
+      .insert({
+        user_id: user.id,
+        role,
+        message
+      });
+
+    if (error) throw error;
+    return true;
+  },
+
+  // SEARCH KNOWLEDGE
+  async knowledge(query = "") {
+    const { data, error } = await client()
+      .from("jehu_ai_knowledge")
+      .select("title,content,category")
+      .limit(50);
+
+    if (error) throw error;
+
+    if (!query.trim()) return data;
+
+    const q = query.toLowerCase();
+
+    return data.filter(item =>
+      (item.title + " " + item.content + " " +
+       item.category).toLowerCase().includes(q)
+    );
+  },
+
+  // CHECK BRAIN STATUS
+  async status() {
+    const user = await this.getUser();
+
+    return {
+      name: "Jehu AI Brain",
+      version: "1.0",
+      connected: true,
+      user: user.id,
+      memory: "Ready",
+      knowledge: "Ready",
+      reasoning: "Basic retrieval"
+    };
+  }
+
+};
+
+console.log("JEHU AI BRAIN CORE INITIALIZED");
+
+
+
+
+
 </script>
 
 <script>
