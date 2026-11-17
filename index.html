@@ -1238,6 +1238,111 @@ background: rgba(4, 15, 32, 0.85);
 
 
 
+
+
+
+
+/* =====================================
+   JEHUAPP WHATSAPP-STYLE CHAT SCREEN
+===================================== */
+
+/* Hide the conversation until a chat is selected */
+.chat-layout:not(.chat-open) .chat-window {
+  display: none;
+}
+
+/* Show only the chat list when no conversation is open */
+.chat-layout:not(.chat-open) {
+  display: block;
+  min-height: 65vh;
+}
+
+.chat-layout:not(.chat-open) .chat-sidebar {
+  width: 100%;
+  min-height: 530px;
+}
+
+/* Full-screen conversation */
+.chat-layout.chat-open {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 115px);
+  min-height: 450px;
+}
+
+.chat-layout.chat-open .chat-sidebar {
+  display: none;
+}
+
+.chat-layout.chat-open .chat-window {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 12px;
+}
+
+/* Keep the messages area flexible */
+.chat-layout.chat-open .messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+/* Chat heading */
+.chat-layout.chat-open .chat-head {
+  flex: 0 0 auto;
+  min-height: 65px;
+}
+
+/* Keep the message tools and composer visible */
+.chat-layout.chat-open .chat-personal-tools,
+.chat-layout.chat-open .compose {
+  flex: 0 0 auto;
+}
+
+/* Mobile full-screen chat */
+@media(max-width:680px) {
+  .chat-layout.chat-open {
+    position: fixed;
+    inset: 60px 0 0;
+    z-index: 20;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    background: var(--bg);
+  }
+
+  .chat-layout.chat-open .chat-window {
+    height: 100%;
+    min-height: 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .chat-layout.chat-open .messages {
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .chat-layout.chat-open .chat-head {
+    padding: 9px;
+  }
+
+  .chat-layout.chat-open .compose {
+    padding: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}
+
+
+
+
+
+
 </style>
 </head>
 
@@ -1285,16 +1390,39 @@ background: rgba(4, 15, 32, 0.85);
  </div>
 </section>
 
+
+
+
+
 <div id="app" class="hidden">
 <header>
- <div class="brand"><div class="logo">◎</div>Jehu<span>App</span></div>
- <div class="right"><span id="headerName" class="muted"></span><button class="secondary" onclick="logout()">Log out</button></div>
+ <div class="brand">
+  <div class="logo">◎</div>Jehu<span>App</span>
+ </div>
+
+ <div class="right" style="display:flex;align-items:center;gap:10px">
+  <img id="headerAvatar"
+       alt="Profile picture"
+       style="width:38px;height:38px;border-radius:50%;
+       object-fit:cover;display:none;border:2px solid #16a085">
+
+  <span id="headerName" class="muted"></span>
+
+  <button class="secondary" onclick="logout()">Log out</button>
+ </div>
 </header>
+
+
+
+
+
+
 
 <div class="layout">
 <aside>
  <button class="nav active" onclick="go('home')">⌂ Home</button>
  <button class="nav" onclick="go('chats')">☏ Messages</button>
+ <button class="nav" onclick="go('friends')">👥 Friends</button>
 
 
 <button class="nav" onclick="go('ai')">✦ Jehu AI</button>
@@ -1338,7 +1466,38 @@ background: rgba(4, 15, 32, 0.85);
 
 
 </section>
+<section class="page hidden" id="page-friends">
+  <div class="card">
+    <h2>👥 Friends</h2>
+    <p>Find people on JehuApp and connect with them.</p>
 
+    <h3>🔍 Find Friends</h3>
+    <input
+      id="friendSearch"
+      type="search"
+      placeholder="Search by display name..."
+      oninput="searchJehuFriends()"
+    >
+
+    <div id="friendSearchResults">
+      <p>Search for people to find friends.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📨 Friend Requests</h3>
+    <div id="incomingFriendRequests">
+      <p>No requests loaded yet.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>👤 My Friends</h3>
+    <div id="myFriendsList">
+      <p>Your accepted friends will appear here.</p>
+    </div>
+  </div>
+</section>
 <section class="page hidden" id="page-chats">
  <div class="chat-layout">
   <div class="chat-sidebar">
@@ -1355,12 +1514,38 @@ background: rgba(4, 15, 32, 0.85);
   </div>
 
   <div class="chat-window">
-   <div class="chat-head">
-    <div class="avatar" id="chatAvatar">J</div>
-    <div class="who"><b id="chatTitle">JehuApp Chat</b><div id="chatSubtitle" class="muted">Choose a conversation</div></div>
-    <button class="secondary" onclick="loadMessages()" title="Refresh messages">↻</button>
-    <button class="primary" type="button" onclick="startVideoCall()" title="Start a video call" aria-label="Start a video call">📹</button>
-   </div>
+   
+
+
+
+
+
+
+<div class="chat-head">
+  <button
+    type="button"
+    class="secondary chat-back-btn"
+    onclick="closeJehuChat()"
+    title="Back to chats"
+  >← Back</button>
+
+  <div class="avatar" id="chatAvatar">J</div>
+
+  <div class="who">
+    <b id="chatTitle">JehuApp Chat</b>
+    <div id="chatSubtitle" class="muted">Choose a conversation</div>
+  </div>
+
+  <button class="secondary" type="button" onclick="loadMessages()" title="Refresh messages">↻</button>
+
+  <button class="primary" type="button" onclick="startVideoCall()" title="Start a video call">📹</button>
+</div>
+
+
+
+
+
+
 
    <div id="messages" class="messages"><div class="empty">Your private conversation appears here.</div></div>
    <div id="imagePreview" class="hidden" style="padding:8px"></div>
@@ -1502,7 +1687,25 @@ background: rgba(4, 15, 32, 0.85);
 
 <section class="page hidden" id="page-profile">
  <div class="card">
+
+<button class="secondary" onclick="go('customise')">
+ 🎨 Customise JehuApp
+</button>
+
+
   <h2>Your Profile</h2>
+
+
+<div style="text-align:center;margin:15px 0">
+  <img id="profileAvatar"
+       alt="Your profile picture"
+       style="width:100px;height:100px;
+       border-radius:50%;object-fit:cover;
+       display:none;border:3px solid #16a085">
+</div>
+
+
+
   <form id="profileForm">
    <label>Display name</label>
    <input id="displayName" maxlength="60" required>
@@ -1516,6 +1719,142 @@ background: rgba(4, 15, 32, 0.85);
   <br><button class="secondary" onclick="copyId()">Copy ID</button>
  </div>
 </section>
+
+
+
+<section class="page hidden" id="page-customise">
+  <div class="card">
+    <h2>🎨 Customise JehuApp</h2>
+    <p class="muted">Make JehuApp look the way you like.</p>
+
+    <h3>👤 Personal Profile</h3>
+
+    <label>Profile picture</label>
+
+
+<div style="margin:15px 0;text-align:center">
+  <img id="customAvatarPreview"
+       src=""
+       alt="Profile picture"
+       style="width:110px;height:110px;border-radius:50%;
+       object-fit:cover;display:none;border:3px solid #16a085">
+</div>
+
+
+    <input type="file" id="customAvatar"
+      accept="image/*">
+
+
+
+
+<button class="secondary" type="button"
+ onclick="uploadJehuProfilePicture()">
+ 📷 Upload Profile Picture
+</button>
+
+
+
+    <label>Your display name</label>
+    <input id="customName" maxlength="60"
+      placeholder="Enter your name">
+
+    <label>About yourself</label>
+    <textarea id="customBio" maxlength="160"
+      placeholder="Write a short note about yourself"></textarea>
+
+    <hr>
+
+    <h3>🌈 App Appearance</h3>
+
+    <label>Choose theme</label>
+    
+<select id="customTheme" onchange="previewJehuCustomisation()">
+
+
+
+
+      <option value="dark">Dark mode</option>
+      <option value="light">Light mode</option>
+    </select>
+
+    <label>Background colour</label>
+    
+
+<input type="color" id="customBackground"
+  onchange="previewJehuCustomisation()"
+
+
+      value="#101827">
+
+    <label>Main app colour</label>
+    <input type="color" id="customAccent"
+  onchange="previewJehuCustomisation()"
+
+
+
+      value="#16a085">
+
+    <hr>
+
+    <h3>💬 Chat Appearance</h3>
+
+    <label>My message colour</label>
+    <input type="color" id="customBubble"
+  onchange="previewJehuCustomisation()"
+
+
+
+
+
+
+      value="#075e54">
+
+    <label>Chat font size</label>
+    
+
+
+<select id="customFontSize" onchange="previewJehuCustomisation()">
+
+      <option value="14px">Small</option>
+      <option value="16px" selected>Normal</option>
+      <option value="18px">Large</option>
+      <option value="20px">Extra large</option>
+    </select>
+
+    <hr>
+
+    <h3>⚙️ Other Preferences</h3>
+
+    <label>
+      <input type="checkbox" id="customNotifications"
+        checked>
+      Enable notifications
+    </label>
+
+    <label>
+      <input type="checkbox" id="customPreview"
+        checked>
+      Show message previews
+    </label>
+
+    <button class="primary" type="button"
+      onclick="saveJehuCustomisation()">
+      💾 Save Customisation
+    </button>
+
+    <div id="customStatus" class="muted"></div>
+
+    <button class="secondary" type="button"
+      onclick="go('profile')">
+      ← Back to Profile
+    </button>
+  </div>
+</section>
+
+
+
+
+
 </div>
 
 <div class="rightside">
@@ -1741,7 +2080,7 @@ const SUPABASE_URL="https://gtegyhlnhkpuzztevjqw.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-LTIfVbvn4Byu5U_zCEeJw_GKhpZQTT";
 const IMAGE_BUCKET="jehu-chat-images";
 
-let db=null,user=null,savedUser=null,peer=null,contacts=[],selectedImage=null,selectedMedia=null,mediaRecorder=null,voiceChunks=[],mode="login",selectedBubbleColor="#075b46";
+let db=null,user=null,savedUser=null,peer=null,contacts=[],selectedImage=null,selectedMedia=null,mediaRecorder=null,voiceChunks=[],mode="login",selectedBubbleColor="#075b46",messagesChannel=null;
 
 const $=id=>document.getElementById(id);
 
@@ -1882,7 +2221,45 @@ if (!firebaseApp) {
   }
 }
 
+function subscribeToJehuMessages(){
+ if(!user || !db) return;
 
+ // Remove an old listener before creating another one
+ if(messagesChannel){
+  db.removeChannel(messagesChannel);
+  messagesChannel=null;
+ }
+
+ messagesChannel=db
+  .channel("jehu-live-messages-"+user.id)
+  .on(
+   "postgres_changes",
+   {
+    event:"INSERT",
+    schema:"public",
+    table:"jehu_messages",
+    filter:"recipient_id=eq."+user.id
+   },
+   async(payload)=>{
+    const newMessage=payload.new;
+
+    // Refresh only the conversation that received this message
+    if(
+     peer &&
+     String(peer.id)===String(newMessage.sender_id)
+    ){
+     await loadMessages();
+    }
+
+    // Update the chat list
+    await loadRecentChats();
+    renderContacts();
+   }
+  )
+  .subscribe((status)=>{
+   console.log("JehuApp live messages:",status);
+  });
+}
 
 
 async function start(u){
@@ -1894,24 +2271,668 @@ async function start(u){
  $("profileEmail").value=u.email||"";
  $("userId").textContent=u.id;
  await ensureProfile();
+subscribeToJehuMessages();
+
  await registerJehuPush(u.id);
  go("home");
  await Promise.all([loadPosts(),loadProducts(),loadRecentChats()]);
 }
 
+
+
+
+
+
+
+
 async function ensureProfile(){
- const fallback=user.user_metadata?.display_name||(user.email||"JehuApp").split("@")[0];
+ const fallback=user.user_metadata?.display_name||
+   (user.email||"JehuApp").split("@")[0];
+
  const {error}=await db.from("jehu_profiles").upsert(
   {id:user.id,display_name:fallback},
   {onConflict:"id",ignoreDuplicates:true}
  );
+
  if(error)console.warn(error.message);
- const {data}=await db.from("jehu_profiles").select("display_name").eq("id",user.id).maybeSingle();
+
+ const {data,error:profileError}=await db
+  .from("jehu_profiles")
+  .select("display_name,avatar_url,bio,custom_settings")
+  .eq("id",user.id)
+  .maybeSingle();
+
+ if(profileError){
+  console.warn("Profile loading:",profileError.message);
+  return;
+ }
+
  const name=data?.display_name||fallback;
+ const settings=data?.custom_settings||{};
+
  $("displayName").value=name;
  $("headerName").textContent=name;
  $("headerName").title=user.email||"";
+
+ // Load customisation fields
+ if($("customName")) $("customName").value=name;
+ if($("customBio")) $("customBio").value=data?.bio||"";
+
+ if($("customTheme"))
+  $("customTheme").value=settings.theme||"dark";
+
+ if($("customBackground"))
+  $("customBackground").value=settings.background||"#101827";
+
+ if($("customAccent"))
+  $("customAccent").value=settings.accent||"#16a085";
+
+ if($("customBubble"))
+  $("customBubble").value=settings.bubble||"#075e54";
+
+ if($("customFontSize"))
+  $("customFontSize").value=settings.fontSize||"16px";
+
+ if($("customNotifications"))
+  $("customNotifications").checked=settings.notifications!==false;
+
+ if($("customPreview"))
+  $("customPreview").checked=settings.preview!==false;
+
+ window.jehuProfile=data;
+ window.jehuCustomSettings=settings;
+applyJehuCustomisation(settings);
+
+
+ // Load the saved profile picture securely
+ if(data?.avatar_url){
+  const {data:avatar,error:avatarError}=await db.storage
+   .from("jehu-chat-images")
+   .createSignedUrl(data.avatar_url,3600);
+
+  if(!avatarError && avatar?.signedUrl){
+   window.jehuAvatarUrl=avatar.signedUrl;
+
+
+const profilePicture=$("profileAvatar");
+const headerAvatar=$("headerAvatar");
+
+if(headerAvatar){
+ headerAvatar.src=avatar.signedUrl;
+ headerAvatar.style.display="block";
 }
+if(profilePicture){
+ profilePicture.src=avatar.signedUrl;
+ profilePicture.style.display="block";
+}
+
+
+
+
+   const preview=$("customAvatarPreview");
+
+   if(preview){
+    preview.src=avatar.signedUrl;
+    preview.style.display="block";
+   }
+  }
+ }
+
+
+
+}
+
+
+
+
+async function saveJehuCustomisation(){
+ const status=$("customStatus");
+
+ try{
+  const name=$("customName").value.trim();
+  const bio=$("customBio").value.trim();
+
+  if(!name){
+   status.textContent="Please enter your display name.";
+   return;
+  }
+
+  const settings={
+   theme:$("customTheme").value,
+   background:$("customBackground").value,
+   accent:$("customAccent").value,
+   bubble:$("customBubble").value,
+   fontSize:$("customFontSize").value,
+   notifications:$("customNotifications").checked,
+   preview:$("customPreview").checked
+  };
+
+  status.textContent="Saving your settings...";
+
+  const {error}=await db.from("jehu_profiles").upsert({
+   id:user.id,
+   display_name:name,
+   bio:bio,
+   custom_settings:settings
+  },{onConflict:"id"});
+
+  if(error) throw error;
+
+  $("displayName").value=name;
+  $("headerName").textContent=name;
+  $("headerName").title=user.email||"";
+
+  window.jehuCustomSettings=settings;
+
+
+applyJehuCustomisation(settings);
+
+  status.textContent="✓ Your customisation has been saved!";
+ }catch(error){
+  console.error(error);
+  status.textContent="Could not save: "+error.message;
+ }
+}
+
+
+
+
+async function uploadJehuProfilePicture(){
+ const input=$("customAvatar");
+ const file=input.files?.[0];
+
+
+const preview=$("customAvatarPreview");
+
+if(file && preview){
+ const reader=new FileReader();
+
+ reader.onload=()=>{
+  preview.src=reader.result;
+  preview.style.display="block";
+ };
+
+ reader.readAsDataURL(file);
+}
+
+
+
+
+ if(!file){
+  alert("Please choose a picture first.");
+  return;
+ }
+
+ if(!file.type.startsWith("image/")){
+  alert("Please select an image.");
+  return;
+ }
+
+ if(file.size>5*1024*1024){
+  alert("Picture must be 5 MB or smaller.");
+  return;
+ }
+
+ try{
+  $("customStatus").textContent="Uploading profile picture...";
+
+  const extension=file.name.split(".").pop().toLowerCase();
+  const path=`profiles/${user.id}/${Date.now()}.${extension}`;
+
+  const {error:uploadError}=await db.storage
+   .from("jehu-chat-images")
+   .upload(path,file,{upsert:true});
+
+  if(uploadError) throw uploadError;
+
+  const {error:updateError}=await db
+   .from("jehu_profiles")
+   .update({avatar_url:path})
+   .eq("id",user.id);
+
+  if(updateError) throw updateError;
+
+  const {data:picture,error:urlError}=await db.storage
+   .from("jehu-chat-images")
+   .createSignedUrl(path,60*60*24*365);
+
+  if(urlError) throw urlError;
+
+  $("customStatus").textContent="✓ Profile picture uploaded!";
+  window.jehuAvatarUrl=picture.signedUrl;
+const headerAvatar=$("headerAvatar");
+
+if(headerAvatar){
+ headerAvatar.src=picture.signedUrl;
+ headerAvatar.style.display="block";
+}
+
+const profilePicture=$("profileAvatar");
+
+if(profilePicture){
+ profilePicture.src=picture.signedUrl;
+ profilePicture.style.display="block";
+}
+ }catch(error){
+  console.error(error);
+  $("customStatus").textContent="Upload failed: "+error.message;
+ }
+}
+
+
+function applyJehuCustomisation(settings={}){
+ const root=document.documentElement;
+
+ const theme=settings.theme||"dark";
+ const background=settings.background||
+   (theme==="light"?"#f4f6f9":"#101827");
+ const accent=settings.accent||"#16a085";
+ const bubble=settings.bubble||"#075e54";
+ const fontSize=settings.fontSize||"16px";
+
+ root.style.setProperty("--jehu-background",background);
+ root.style.setProperty("--jehu-accent",accent);
+ root.style.setProperty("--jehu-bubble",bubble);
+ root.style.setProperty("--jehu-font-size",fontSize);
+
+ document.body.style.background=background;
+ document.body.style.color=
+   theme==="light"?"#172033":"#ffffff";
+
+ document.querySelectorAll(".primary").forEach(button=>{
+  button.style.background=accent;
+ });
+
+ document.querySelectorAll(".message.mine").forEach(message=>{
+  message.style.background=bubble;
+ });
+
+ document.querySelectorAll(".chat-messages").forEach(chat=>{
+  chat.style.fontSize=fontSize;
+ });
+
+ localStorage.setItem(
+  "jehuCustomisation",
+  JSON.stringify(settings)
+);
+}
+
+
+
+
+function previewJehuCustomisation(){
+ const settings={
+  theme:$("customTheme").value,
+  background:$("customBackground").value,
+  accent:$("customAccent").value,
+  bubble:$("customBubble").value,
+  fontSize:$("customFontSize").value
+ };
+
+ applyJehuCustomisation(settings);
+}
+
+
+
+// ===============================
+// JEHUAPP FRIENDS SYSTEM
+// ===============================
+
+
+
+
+
+
+
+
+async function searchJehuFriends(){
+  if(!user) return;
+
+  const search=$("friendSearch").value.trim();
+  const box=$("friendSearchResults");
+
+  box.innerHTML="<p>Loading JehuApp members...</p>";
+
+  try{
+    let memberQuery=db
+      .from("jehu_profiles")
+      .select("id,display_name,avatar_url,bio")
+      .neq("id",user.id)
+      .order("display_name",{ascending:true})
+      .limit(50);
+
+    if(search.length>=2){
+      memberQuery=memberQuery.ilike(
+        "display_name","%"+search+"%"
+      );
+    }
+
+    const {data,error}=await memberQuery;
+    if(error) throw error;
+
+    if(!data||!data.length){
+      box.innerHTML="<p>No other members found yet.</p>";
+      return;
+    }
+
+    const {data:requests,error:requestError}=await db
+      .from("jehu_friend_requests")
+      .select("sender_id,receiver_id,status")
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+
+    if(requestError) throw requestError;
+
+    const membersWithPictures=await Promise.all(
+      data.map(async person=>{
+        let avatarUrl="";
+
+        if(person.avatar_url){
+          const {data:picture,error:pictureError}=await db.storage
+            .from("jehu-chat-images")
+            .createSignedUrl(person.avatar_url,3600);
+
+          if(!pictureError){
+            avatarUrl=picture?.signedUrl||"";
+          }
+        }
+
+        return {...person,avatarDisplay:avatarUrl};
+      })
+    );
+
+    box.innerHTML=membersWithPictures.map(person=>{
+      const request=(requests||[]).find(r=>
+        (r.sender_id===user.id&&r.receiver_id===person.id)||
+        (r.sender_id===person.id&&r.receiver_id===user.id)
+      );
+
+      let action="";
+
+      if(request?.status==="accepted"){
+        action="<span>✓ Friends</span>";
+      }else if(request?.status==="pending"){
+        action=request.sender_id===user.id
+          ?"<span>Request sent</span>"
+          :"<span>Request received</span>";
+      }else{
+        action=`<button onclick="sendJehuFriendRequest('${person.id}')">＋ Add Friend</button>`;
+      }
+
+      const avatar=person.avatarDisplay
+        ?`<img src="${person.avatarDisplay}" alt="Profile picture" style="width:55px;height:55px;border-radius:50%;object-fit:cover">`
+        :`<span style="font-size:32px">👤</span>`;
+
+      return `
+        <div class="friend-result" style="display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #ddd">
+          ${avatar}
+          <div style="flex:1;min-width:0">
+            <strong>${esc(person.display_name||"JehuApp member")}</strong>
+            <p>${esc(person.bio||"")}</p>
+          </div>
+          ${action}
+        </div>
+      `;
+    }).join("");
+
+  }catch(error){
+    console.error("Friend search:",error);
+    box.innerHTML="<p>Could not load members: "+
+      esc(error.message)+"</p>";
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+async function sendJehuFriendRequest(receiverId){
+  if(!user || !receiverId) return;
+
+  try{
+    const {error} = await db
+      .from("jehu_friend_requests")
+      .insert({
+        sender_id:user.id,
+        receiver_id:receiverId,
+        status:"pending"
+      });
+
+    if(error) throw error;
+
+    alert("Friend request sent!");
+
+    await searchJehuFriends();
+
+  }catch(error){
+    console.error(error);
+    alert("Could not send request. A request may already exist.");
+  }
+}
+
+
+
+// Load incoming friend requests
+async function loadJehuFriendRequests(){
+  if(!user) return;
+
+  const box = $("incomingFriendRequests");
+  box.innerHTML = "<p>Loading requests...</p>";
+
+  try{
+    const {data:requests,error} = await db
+      .from("jehu_friend_requests")
+      .select("id,sender_id,receiver_id,created_at")
+      .eq("receiver_id",user.id)
+      .eq("status","pending")
+      .order("created_at",{ascending:false});
+
+    if(error) throw error;
+
+    if(!requests || !requests.length){
+      box.innerHTML = "<p>No incoming friend requests.</p>";
+      return;
+    }
+
+    const ids = requests.map(r=>r.sender_id);
+
+    const {data:profiles,error:profileError} = await db
+      .from("jehu_profiles")
+      .select("id,display_name,avatar_url,bio")
+      .in("id",ids);
+
+    if(profileError) throw profileError;
+
+    box.innerHTML = requests.map(request=>{
+      const person = profiles.find(p=>p.id===request.sender_id);
+
+      return `
+        <div style="padding:12px;border-bottom:1px solid #ddd">
+          <strong>${esc(person?.display_name||"JehuApp member")}</strong>
+          <p>${esc(person?.bio||"")}</p>
+          <button onclick="respondJehuFriendRequest('${request.id}','accepted')">
+            Accept
+          </button>
+          <button onclick="respondJehuFriendRequest('${request.id}','rejected')">
+            Reject
+          </button>
+        </div>
+      `;
+    }).join("");
+
+  }catch(error){
+    console.error(error);
+    box.innerHTML = "<p>Could not load friend requests.</p>";
+  }
+}
+
+
+// Accept or reject a request
+async function respondJehuFriendRequest(requestId,status){
+  if(!user) return;
+
+  if(!["accepted","rejected"].includes(status)) return;
+
+  try{
+    const {error} = await db
+      .from("jehu_friend_requests")
+      .update({status})
+      .eq("id",requestId)
+      .eq("receiver_id",user.id)
+      .eq("status","pending");
+
+    if(error) throw error;
+
+    await loadJehuFriendRequests();
+    await loadJehuFriends();
+
+    const search = $("friendSearch").value.trim();
+    if(search.length>=2) await searchJehuFriends();
+
+  }catch(error){
+    console.error(error);
+    alert("Could not update this friend request.");
+  }
+}
+
+
+// Load accepted friends
+
+
+
+
+async function loadJehuFriends(){
+  if(!user) return;
+
+  const box = $("myFriendsList");
+  box.innerHTML = "<p>Loading friends...</p>";
+
+  try{
+    const {data:requests,error} = await db
+      .from("jehu_friend_requests")
+      .select("sender_id,receiver_id")
+      .eq("status","accepted")
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+
+    if(error) throw error;
+
+    if(!requests || !requests.length){
+      box.innerHTML = "<p>You have no friends yet. Search for members above.</p>";
+      return;
+    }
+
+    const ids = requests.map(r =>
+      r.sender_id===user.id ? r.receiver_id : r.sender_id
+    );
+
+    const {data:profiles,error:profileError} = await db
+      .from("jehu_profiles")
+      .select("id,display_name,avatar_url,bio")
+      .in("id",ids);
+
+    if(profileError) throw profileError;
+
+    box.innerHTML = (profiles||[]).map(person=>`
+      <div style="padding:12px;border-bottom:1px solid #254657">
+        <strong>${esc(person.display_name||"JehuApp member")}</strong>
+        <p>${esc(person.bio||"")}</p>
+        <span>✓ Friend</span>
+        <button class="primary"
+          onclick="openJehuFriendChat('${person.id}')">
+          💬 Message
+        </button>
+      </div>
+    `).join("");
+
+  }catch(error){
+    console.error(error);
+    box.innerHTML = "<p>Could not load friends.</p>";
+  }
+}
+
+
+// Open an accepted friend's existing private conversation
+async function openJehuFriendChat(friendId){
+  if(!user || !friendId) return;
+
+  try{
+    const {data:requests,error} = await db
+      .from("jehu_friend_requests")
+      .select("sender_id,receiver_id")
+      .eq("status","accepted")
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+
+    if(error) throw error;
+
+    const isFriend = (requests||[]).some(r =>
+      (r.sender_id===user.id && r.receiver_id===friendId) ||
+      (r.sender_id===friendId && r.receiver_id===user.id)
+    );
+
+    if(!isFriend){
+      alert("You can only message accepted friends.");
+      await loadJehuFriends();
+      return;
+    }
+
+    const {data:person,error:profileError} = await db
+      .from("jehu_profiles")
+      .select("id,display_name")
+      .eq("id",friendId)
+      .maybeSingle();
+
+    if(profileError) throw profileError;
+    if(!person) throw new Error("Friend profile not found.");
+
+    $("peerId").value = friendId;
+
+    go("chats");
+    await loadRecentChats();
+
+    peer = {
+      id: person.id,
+      name: person.display_name || "JehuApp member"
+    };
+
+    const cached = JSON.parse(
+      localStorage.getItem("jehu_profiles_cache_"+user.id)||"[]"
+    );
+
+    localStorage.setItem(
+      "jehu_profiles_cache_"+user.id,
+      JSON.stringify([
+        ...cached.filter(p=>p.id!==person.id),
+        person
+      ])
+    );
+
+    if(!contacts.some(c=>c.id===person.id)){
+      contacts.unshift({
+        id:person.id,
+        name:peer.name,
+        last:"No messages yet"
+      });
+    }
+
+    renderContacts();
+    showSelectedChat();
+    await loadMessages();
+
+  }catch(error){
+    console.error("Opening friend chat:",error);
+    alert("Could not open this conversation: "+error.message);
+  }
+}
+
+
+
+
+
 
 async function logout(){
  if(callId)await closeVideoCall();
@@ -1920,6 +2941,15 @@ async function logout(){
   callChannel=null;
   callChannelTopic=null;
  }
+
+if(messagesChannel && db){
+  await db.removeChannel(messagesChannel);
+  messagesChannel=null;
+}
+
+
+
+
  if(db)await db.auth.signOut();
  user=null;
  peer=null;
@@ -1966,7 +2996,25 @@ function go(page) {
   if (page === "updates") loadPosts();
   if (page === "market") loadProducts();
   if (page === "ai") loadJehuAIHistory();
+
+
+
+
+
+
+
+
+if(page === "friends"){
+  searchJehuFriends();
+  loadJehuFriendRequests();
+  loadJehuFriends();
 }
+
+
+}
+
+
+
 
 
 
@@ -2222,6 +3270,7 @@ async function deletePost(id){
 
 
 
+
 async function openChat(){
  const id=$("peerId").value.trim();
 
@@ -2235,25 +3284,29 @@ async function openChat(){
 
  let profile=null;
 
- // Find the saved profile name
+ // Find the saved profile
  try{
   const cached=JSON.parse(
    localStorage.getItem("jehu_profiles_cache_"+user.id)||"[]"
   );
-  profile=cached.find(p=>p.id===id)||null;
+  profile=cached.find(p=>String(p.id)===String(id))||null;
  }catch(error){
   console.log("Profile cache:",error);
  }
 
  const contact=contacts.find(c=>String(c.id)===String(id));
 
- // Open a saved contact immediately without waiting for internet
+ // Open a saved contact immediately
  if(contact || profile){
   peer={
    id:id,
    name:profile?.display_name?.trim()||
         contact?.name||
-        "JehuApp member"
+        "JehuApp member",
+   avatar_url:profile?.avatar_url||
+              contact?.avatar_url||
+              contact?.avatarUrl||
+              null
   };
 
   showSelectedChat();
@@ -2261,10 +3314,10 @@ async function openChat(){
   return;
  }
 
- // Only search Supabase for a new, unsaved contact
+ // Find a new member, including their profile picture
  try{
   const {data,error}=await db.from("jehu_profiles")
-   .select("id,display_name")
+   .select("id,display_name,avatar_url")
    .eq("id",id)
    .maybeSingle();
 
@@ -2282,12 +3335,16 @@ async function openChat(){
 
   localStorage.setItem(
    "jehu_profiles_cache_"+user.id,
-   JSON.stringify([...saved.filter(p=>p.id!==id),data])
+   JSON.stringify([
+    ...saved.filter(p=>String(p.id)!==String(id)),
+    data
+   ])
   );
 
   peer={
    id:id,
-   name:data.display_name||"JehuApp member"
+   name:data.display_name||"JehuApp member",
+   avatar_url:data.avatar_url||null
   };
 
   showSelectedChat();
@@ -2303,31 +3360,87 @@ async function openChat(){
 
 
 
-
-
-
-
-
-function showSelectedChat(){
+async function showSelectedChat(){
  if(!user || !peer) return;
 
  selectedBubbleColor=
   localStorage.getItem(bubbleColorKey()) || "#075b46";
 
  $("chatTitle").textContent=peer.name;
- $("chatAvatar").textContent=initials(peer.name);
+
+ const avatar=$("chatAvatar");
+
+ // Show initials while the profile picture loads
+ avatar.textContent=initials(peer.name);
+ avatar.style.backgroundImage="none";
+ avatar.style.backgroundSize="cover";
+ avatar.style.backgroundPosition="center";
+ avatar.style.backgroundRepeat="no-repeat";
+
+ // Load the private profile picture
+ if(peer.avatar_url){
+  try{
+   const path=peer.avatar_url;
+
+   const {data,error}=await db.storage
+    .from("jehu-chat-images")
+    .createSignedUrl(path,3600);
+
+   if(error)throw error;
+
+   if(data?.signedUrl){
+    const picture=new Image();
+
+    picture.onload=()=>{
+     if(peer && peer.id===currentPeerId){
+      avatar.textContent="";
+      avatar.style.backgroundImage=
+       `url("${data.signedUrl}")`;
+     }
+    };
+
+    picture.src=data.signedUrl;
+   }
+  }catch(error){
+   console.error("Could not load chat profile picture:",error);
+  }
+ }
+
  $("chatSubtitle").textContent="Private conversation";
  $("chatStatus").textContent="Chat opened.";
 
+ $("messages").innerHTML =
+  '<div class="empty">Loading chat history...</div>';
+
+ const chatLayout=document.querySelector(".chat-layout");
+
+ if(chatLayout){
+  chatLayout.classList.add("chat-open");
+ }
+
  renderContacts();
 
- // Connect to the selected person's call channel
  connectCallChannel().catch(error=>{
   console.error("Call channel connection failed:",error);
  });
 }
 
 
+
+
+
+
+
+
+function closeJehuChat(){
+ const chatLayout=document.querySelector(".chat-layout");
+
+ if(chatLayout){
+  chatLayout.classList.remove("chat-open");
+ }
+
+ $("chatStatus").textContent="Choose a conversation.";
+}
 
 
 
